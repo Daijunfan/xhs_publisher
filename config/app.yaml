@@ -1,0 +1,34 @@
+version: 1
+runtime_root: ../runtime
+database_path: ../runtime/app.sqlite3
+timezone: Asia/Shanghai
+queues:
+  ingest_maxsize: 100
+  publish_maxsize: 20
+  processor_workers: 1
+  publisher_workers: 1
+status:
+  host: 127.0.0.1
+  port: 17654
+website:
+  enabled: true
+  host: 127.0.0.1
+  port: 8080
+sqlite:
+  busy_timeout_seconds: 30
+  max_database_bytes: 1073741824
+retention:
+  enabled: false
+  batch_size: 500
+  media_days: 3650
+  generated_days: 30
+  diagnostics_days: 30
+  logs_days: 30
+backup:
+  automatic: false
+  keep: 7
+agents:
+  enabled: false
+  endpoint: http://127.0.0.1:5152
+  token_file: ../runtime/secrets/agents-collector.token
+  poll_seconds: 5

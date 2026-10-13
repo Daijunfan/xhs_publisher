@@ -1,0 +1,24 @@
+*.log
+.DS_Store
+
+# Local credentials and Python build state
+.env
+.env.*
+!.env.example
+Sensitive data/
+api.md
+*.cookies.txt
+*.session*
+.venv/
+.venv*/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+bot_token.md
+bilibili_and_youtube.md
+
+# Runtime state and generated cards never belong to source control.
+runtime/

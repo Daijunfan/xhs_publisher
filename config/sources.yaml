@@ -1,0 +1,2955 @@
+version: 1
+sources:
+- id: telegram-main
+  plugin: telegram
+  enabled: true
+  poll_seconds: 300.0
+  options:
+    default_post_limit: 100
+    lookback_hours: 24
+    max_image_bytes: 20971520
+    session_path: ../runtime/sessions/telegram-user.session
+    api_id: 1
+    api_hash: '00000000000000000000000000000000'
+    fetch_timeout_seconds: 90
+    media_timeout_seconds: 90
+  targets:
+  - poll_seconds: 300.0
+    id: telegram-godlynews1
+    locator: GodlyNews1
+    name: Yummy
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-xhqcankao
+    locator: xhqcankao
+    name: 风向旗参考快讯
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-dnspodt
+    locator: DNSPODT
+    name: LoopDNS资讯播报
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-solidot
+    locator: solidot
+    name: Solidot
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-zaihuapd
+    locator: zaihuapd
+    name: 科技圈在花频道
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-tnews365
+    locator: tnews365
+    name: 竹新社
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-thehackernews
+    locator: thehackernews
+    name: The Hacker News
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-ai-deeplearning
+    locator: AI_DeepLearning
+    name: AI & Deep Learning
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-deeplearning-ai
+    locator: DeepLearning_ai
+    name: DeepLearning.AI
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-artificial-intelligence-in
+    locator: Artificial_intelligence_in
+    name: Artificial Intelligence
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-computer-science-programming
+    locator: computer_science_and_programming
+    name: Computer Science and Programming
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-linuxgram
+    locator: linuxgram
+    name: Linuxgram
+    enabled: true
+    options: {}
+  - poll_seconds: 300.0
+    id: telegram-machine-learning-courses
+    locator: machine_learning_courses
+    name: Machine Learning Courses
+    enabled: true
+    options: {}
+  - poll_seconds: 30.0
+    id: telegram-trunkietrunk
+    locator: trunkietrunk
+    name: 🟣🟢 English Trunk | Английский язык
+    enabled: true
+    options:
+      collect_documents: true
+      lookback_hours: 48
+      max_documents: 1
+      collect_timeout_seconds: 900
+- id: x-main
+  plugin: x
+  enabled: true
+  poll_seconds: 3600.0
+  options:
+    lookback_hours: 24
+    max_posts_per_target: 20
+    max_images_per_post: 4
+    max_image_bytes: 20971520
+    request_timeout_seconds: 30
+    max_concurrency: 8
+  targets:
+  - poll_seconds: 3600.0
+    id: x-emperoai
+    locator: EmperoAI
+    name: Empero @EmperoAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hackernews
+    locator: hackernews
+    name: Hacker News @hackernews
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-googleai
+    locator: GoogleAI
+    name: Google AI @GoogleAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-googleresearch
+    locator: GoogleResearch
+    name: Google Research @GoogleResearch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mistralai
+    locator: MistralAI
+    name: Mistral AI @MistralAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nvidiaai
+    locator: NVIDIAAI
+    name: NVIDIA AI @NVIDIAAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-msftresearch
+    locator: MSFTResearch
+    name: Microsoft Research @MSFTResearch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ibmresearch
+    locator: IBMResearch
+    name: IBM Research @IBMResearch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-amazonscience
+    locator: AmazonScience
+    name: Amazon Science @AmazonScience
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sfresearch
+    locator: SFResearch
+    name: Salesforce AI Research @SFResearch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cohere-labs
+    locator: Cohere_Labs
+    name: Cohere Labs @Cohere_Labs
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ai21labs
+    locator: AI21Labs
+    name: AI21 Labs @AI21Labs
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-stabilityai
+    locator: StabilityAI
+    name: Stability AI @StabilityAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-allen-ai
+    locator: allen_ai
+    name: Ai2 @allen_ai
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-laion-ai
+    locator: LAION_AI
+    name: LAION @LAION_AI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-togethercompute
+    locator: togethercompute
+    name: Together AI @togethercompute
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cerebras
+    locator: Cerebras
+    name: Cerebras @Cerebras
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-deepseek-ai
+    locator: deepseek_ai
+    name: DeepSeek @deepseek_ai
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-alibaba-qwen
+    locator: Alibaba_Qwen
+    name: Qwen @Alibaba_Qwen
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sakanaailabs
+    locator: SakanaAILabs
+    name: Sakana AI @SakanaAILabs
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thinkymachines
+    locator: thinkymachines
+    name: Thinking Machines @thinkymachines
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-langchain
+    locator: LangChain
+    name: LangChain @LangChain
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-llama-index
+    locator: llama_index
+    name: LlamaIndex @llama_index
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-pytorch
+    locator: PyTorch
+    name: PyTorch @PyTorch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-vllm-project
+    locator: vllm_project
+    name: vLLM @vllm_project
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lmsysorg
+    locator: lmsysorg
+    name: LMSYS Org @lmsysorg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-huggingpapers
+    locator: HuggingPapers
+    name: DailyPapers @HuggingPapers
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-artificialanlys
+    locator: ArtificialAnlys
+    name: Artificial Analysis @ArtificialAnlys
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-epochairesearch
+    locator: EpochAIResearch
+    name: Epoch AI @EpochAIResearch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-metr-evals
+    locator: METR_Evals
+    name: METR @METR_Evals
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-stanfordhai
+    locator: StanfordHAI
+    name: Stanford HAI @StanfordHAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-stanfordailab
+    locator: StanfordAILab
+    name: Stanford AI Lab @StanfordAILab
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-berkeley-ai
+    locator: Berkeley_AI
+    name: Berkeley AI Research @Berkeley_AI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mit-csail
+    locator: MIT_CSAIL
+    name: MIT CSAIL @MIT_CSAIL
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-neuripsconf
+    locator: NeurIPSConf
+    name: NeurIPS @NeurIPSConf
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-icmlconf
+    locator: icmlconf
+    name: ICML @icmlconf
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-iclr-conf
+    locator: iclr_conf
+    name: ICLR @iclr_conf
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bostondynamics
+    locator: BostonDynamics
+    name: Boston Dynamics @BostonDynamics
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-figure-robot
+    locator: Figure_robot
+    name: Figure @Figure_robot
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-unitreerobotics
+    locator: UnitreeRobotics
+    name: Unitree @UnitreeRobotics
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-physical-int
+    locator: Physical_Int
+    name: Physical Intelligence @Physical_Int
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-skildai
+    locator: SkildAI
+    name: Skild AI @SkildAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lerobothf
+    locator: LeRobotHF
+    name: LeRobot @LeRobotHF
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-waymo
+    locator: Waymo
+    name: Waymo @Waymo
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cloudflare
+    locator: Cloudflare
+    name: Cloudflare @Cloudflare
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-github
+    locator: github
+    name: GitHub @github
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thehackersnews
+    locator: TheHackersNews
+    name: The Hacker News @TheHackersNews
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-quantamagazine
+    locator: QuantaMagazine
+    name: Quanta Magazine @QuantaMagazine
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nature
+    locator: Nature
+    name: Nature @Nature
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sciencemagazine
+    locator: ScienceMagazine
+    name: Science Magazine @ScienceMagazine
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-karpathy
+    locator: karpathy
+    name: Andrej Karpathy @karpathy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thsottiaux
+    locator: thsottiaux
+    name: Tibo @thsottiaux
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-simonw
+    locator: simonw
+    name: Simon Willison @simonw
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bcherny
+    locator: bcherny
+    name: Boris Cherny @bcherny
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-steipete
+    locator: steipete
+    name: Peter Steinberger @steipete
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-openai
+    locator: OpenAI
+    name: OpenAI @OpenAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sama
+    locator: sama
+    name: Sam Altman @sama
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-anthropicai
+    locator: AnthropicAI
+    name: Anthropic @AnthropicAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-demishassabis
+    locator: demishassabis
+    name: Demis Hassabis @demishassabis
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-googledeepmind
+    locator: GoogleDeepMind
+    name: Google DeepMind @GoogleDeepMind
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-andrewyng
+    locator: AndrewYNg
+    name: Andrew Ng @AndrewYNg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ylecun
+    locator: ylecun
+    name: Yann LeCun @ylecun
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-drfeifei
+    locator: drfeifei
+    name: Fei-Fei Li @drfeifei
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-darioamodei
+    locator: DarioAmodei
+    name: Dario Amodei @DarioAmodei
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-gdb
+    locator: gdb
+    name: Greg Brockman @gdb
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-aravsrinivas
+    locator: AravSrinivas
+    name: Aravind Srinivas @AravSrinivas
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-drjimfan
+    locator: DrJimFan
+    name: Jim Fan @DrJimFan
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-fchollet
+    locator: fchollet
+    name: François Chollet @fchollet
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lilianweng
+    locator: LilianWeng
+    name: Lilian Weng @LilianWeng
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-spacex
+    locator: SpaceX
+    name: SpaceX @SpaceX
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nvidia
+    locator: nvidia
+    name: NVIDIA @nvidia
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jeffdean
+    locator: JeffDean
+    name: Jeff Dean @JeffDean
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-geoffreyhinton
+    locator: geoffreyhinton
+    name: Geoffrey Hinton @geoffreyhinton
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ilyasut
+    locator: ilyasut
+    name: Ilya Sutskever @ilyasut
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-noamshazeer
+    locator: NoamShazeer
+    name: Noam Shazeer @NoamShazeer
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-oriolvinyalsml
+    locator: OriolVinyalsML
+    name: Oriol Vinyals @OriolVinyalsML
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-quocleix
+    locator: quocleix
+    name: Quoc Le @quocleix
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-aidangomez
+    locator: aidangomez
+    name: Aidan Gomez @aidangomez
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-miramurati
+    locator: miramurati
+    name: Mira Murati @miramurati
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mustafasuleyman
+    locator: mustafasuleyman
+    name: Mustafa Suleyman @mustafasuleyman
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-alexandr-wang
+    locator: alexandr_wang
+    name: Alexandr Wang @alexandr_wang
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-arthurmensch
+    locator: arthurmensch
+    name: Arthur Mensch @arthurmensch
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thom-wolf
+    locator: thom_wolf
+    name: Thomas Wolf @thom_wolf
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-clementdelangue
+    locator: ClementDelangue
+    name: Clément Delangue @ClementDelangue
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-swyx
+    locator: swyx
+    name: Shawn Wang @swyx
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-theo
+    locator: theo
+    name: Theo @theo
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-levelsio
+    locator: levelsio
+    name: Pieter Levels @levelsio
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-natfriedman
+    locator: natfriedman
+    name: Nat Friedman @natfriedman
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-id-aa-carmack
+    locator: ID_AA_Carmack
+    name: John Carmack @ID_AA_Carmack
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-realgeorgehotz
+    locator: realGeorgeHotz
+    name: George Hotz @realGeorgeHotz
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-paulg
+    locator: paulg
+    name: Paul Graham @paulg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rauchg
+    locator: rauchg
+    name: Guillermo Rauch @rauchg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dhh
+    locator: dhh
+    name: David Heinemeier Hansson @dhh
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mitchellh
+    locator: mitchellh
+    name: Mitchell Hashimoto @mitchellh
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-kelseyhightower
+    locator: kelseyhightower
+    name: Kelsey Hightower @kelseyhightower
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-b0rk
+    locator: b0rk
+    name: Julia Evans @b0rk
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-gergelyorosz
+    locator: GergelyOrosz
+    name: Gergely Orosz @GergelyOrosz
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-brendangregg
+    locator: brendangregg
+    name: Brendan Gregg @brendangregg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rich-harris
+    locator: Rich_Harris
+    name: Rich Harris @Rich_Harris
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-evanyou
+    locator: evanyou
+    name: Evan You @evanyou
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rough-sea
+    locator: rough__sea
+    name: Ryan Dahl @rough__sea
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-soumithchintala
+    locator: soumithchintala
+    name: Soumith Chintala @soumithchintala
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-goodfellow-ian
+    locator: goodfellow_ian
+    name: Ian Goodfellow @goodfellow_ian
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jeremyphoward
+    locator: jeremyphoward
+    name: Jeremy Howard @jeremyphoward
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rasbt
+    locator: rasbt
+    name: Sebastian Raschka @rasbt
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jasonwei
+    locator: _jasonwei
+    name: Jason Wei @_jasonwei
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jxnlco
+    locator: jxnlco
+    name: Jason Liu @jxnlco
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-chipro
+    locator: chipro
+    name: Chip Huyen @chipro
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jayalammar
+    locator: JayAlammar
+    name: Jay Alammar @JayAlammar
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hardmaru
+    locator: hardmaru
+    name: David Ha @hardmaru
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-awnihannun
+    locator: AwniHannun
+    name: Awni Hannun @AwniHannun
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-srush-nlp
+    locator: srush_nlp
+    name: Sasha Rush @srush_nlp
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-amandaaskell
+    locator: AmandaAskell
+    name: Amanda Askell @AmandaAskell
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ch402
+    locator: ch402
+    name: Chris Olah @ch402
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nickcammarata
+    locator: nickcammarata
+    name: Nick Cammarata @nickcammarata
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-tszzl
+    locator: tszzl
+    name: roon @tszzl
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-natolambert
+    locator: natolambert
+    name: Nathan Lambert @natolambert
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-danhendrycks
+    locator: hendrycks
+    name: Dan Hendrycks @hendrycks
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-yoshua-bengio
+    locator: Yoshua_Bengio
+    name: Yoshua Bengio @Yoshua_Bengio
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-chelseabfinn
+    locator: chelseabfinn
+    name: Chelsea Finn @chelseabfinn
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-svlevine
+    locator: svlevine
+    name: Sergey Levine @svlevine
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-pabbeel
+    locator: pabbeel
+    name: Pieter Abbeel @pabbeel
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ken-goldberg
+    locator: Ken_Goldberg
+    name: Ken Goldberg @Ken_Goldberg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sudeepdasari
+    locator: SudeepDasari
+    name: Sudeep Dasari @SudeepDasari
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-animaanandkumar
+    locator: AnimaAnandkumar
+    name: Anima Anandkumar @AnimaAnandkumar
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-percyliang
+    locator: percyliang
+    name: Percy Liang @percyliang
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-giffmana
+    locator: giffmana
+    name: Lucas Beyer @giffmana
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-wightmanr
+    locator: wightmanr
+    name: Ross Wightman @wightmanr
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-tim-dettmers
+    locator: Tim_Dettmers
+    name: Tim Dettmers @Tim_Dettmers
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-tridao
+    locator: tridao
+    name: Tri Dao @tridao
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sh-reya
+    locator: sh_reya
+    name: Shreya Shankar @sh_reya
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-shunyuyao12
+    locator: ShunyuYao12
+    name: Shunyu Yao @ShunyuYao12
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-zicokolter
+    locator: zicokolter
+    name: Zico Kolter @zicokolter
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-gordic-aleksa
+    locator: gordic_aleksa
+    name: Aleksa Gordić @gordic_aleksa
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-arankomatsuzaki
+    locator: arankomatsuzaki
+    name: Aran Komatsuzaki @arankomatsuzaki
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-tunguz
+    locator: tunguz
+    name: Bojan Tunguz @tunguz
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-emollick
+    locator: emollick
+    name: Ethan Mollick @emollick
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dwarkesh-sp
+    locator: dwarkesh_sp
+    name: Dwarkesh Patel @dwarkesh_sp
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lexfridman
+    locator: lexfridman
+    name: Lex Fridman @lexfridman
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-akhaliq
+    locator: _akhaliq
+    name: AK @_akhaliq
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dair-ai
+    locator: dair_ai
+    name: DAIR.AI @dair_ai
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-askalphaxiv
+    locator: askalphaxiv
+    name: alphaXiv @askalphaxiv
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rowancheung
+    locator: rowancheung
+    name: Rowan Cheung @rowancheung
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lioronai
+    locator: LiorOnAI
+    name: Lior Alexander @LiorOnAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mattshumer
+    locator: mattshumer_
+    name: Matt Shumer @mattshumer_
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-officiallogank
+    locator: OfficialLoganK
+    name: Logan Kilpatrick @OfficialLoganK
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-petergyang
+    locator: petergyang
+    name: Peter Yang @petergyang
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-vikhyatk
+    locator: vikhyatk
+    name: Vikhyat @vikhyatk
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-minchoi
+    locator: minchoi
+    name: Min Choi @minchoi
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-rileybrown
+    locator: rileybrown
+    name: Riley Brown @rileybrown
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bilawalsidhu
+    locator: bilawalsidhu
+    name: Bilawal Sidhu @bilawalsidhu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hwchase17
+    locator: hwchase17
+    name: Harrison Chase @hwchase17
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jerryjliu0
+    locator: jerryjliu0
+    name: Jerry Liu @jerryjliu0
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-maximelabonne
+    locator: maximelabonne
+    name: Maxime Labonne @maximelabonne
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-svpino
+    locator: svpino
+    name: Santiago Valdarrama @svpino
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-omarsar0
+    locator: omarsar0
+    name: Elvis Saravia @omarsar0
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dylan522p
+    locator: dylan522p
+    name: Dylan Patel @dylan522p
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jackclarksf
+    locator: jackclarkSF
+    name: Jack Clark @jackclarkSF
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-polynoamial
+    locator: polynoamial
+    name: Noam Brown @polynoamial
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jeffclune
+    locator: jeffclune
+    name: Jeff Clune @jeffclune
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-garymarcus
+    locator: GaryMarcus
+    name: Gary Marcus @GaryMarcus
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-martinfowler
+    locator: martinfowler
+    name: Martin Fowler @martinfowler
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bcantrill
+    locator: bcantrill
+    name: Bryan Cantrill @bcantrill
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jonathan-blow
+    locator: Jonathan_Blow
+    name: Jonathan Blow @Jonathan_Blow
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-addyosmani
+    locator: addyosmani
+    name: Addy Osmani @addyosmani
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jaffathecake
+    locator: jaffathecake
+    name: Jake Archibald @jaffathecake
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-shanselman
+    locator: shanselman
+    name: Scott Hanselman @shanselman
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mipsytipsy
+    locator: mipsytipsy
+    name: Charity Majors @mipsytipsy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-copyconstruct
+    locator: copyconstruct
+    name: Cindy Sridharan @copyconstruct
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-adrianco
+    locator: adrianco
+    name: Adrian Cockcroft @adrianco
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-solomonstre
+    locator: solomonstre
+    name: Solomon Hykes @solomonstre
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-awesomekling
+    locator: awesomekling
+    name: Andreas Kling @awesomekling
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-marcan42
+    locator: marcan42
+    name: Hector Martin @marcan42
+    enabled: false
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-geerlingguy
+    locator: geerlingguy
+    name: Jeff Geerling @geerlingguy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bunnie
+    locator: bunnie
+    name: Andrew Huang @bunnie
+    enabled: false
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-iancutress
+    locator: IanCutress
+    name: Ian Cutress @IanCutress
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-patrick1kennedy
+    locator: Patrick1Kennedy
+    name: Patrick Kennedy @Patrick1Kennedy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jimkxa
+    locator: jimkxa
+    name: Jim Keller @jimkxa
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nixcraft
+    locator: nixcraft
+    name: nixCraft @nixcraft
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-steve-yegge
+    locator: Steve_Yegge
+    name: Steve Yegge @Steve_Yegge
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-arvidkahl
+    locator: arvidkahl
+    name: Arvid Kahl @arvidkahl
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-liveoverflow
+    locator: LiveOverflow
+    name: LiveOverflow @LiveOverflow
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-taviso
+    locator: taviso
+    name: Tavis Ormandy @taviso
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-swiftonsecurity
+    locator: SwiftOnSecurity
+    name: SwiftOnSecurity @SwiftOnSecurity
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-racheltobac
+    locator: RachelTobac
+    name: Rachel Tobac @RachelTobac
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mikko
+    locator: mikko
+    name: Mikko Hyppönen @mikko
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-troyhunt
+    locator: troyhunt
+    name: Troy Hunt @troyhunt
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-briankrebs
+    locator: briankrebs
+    name: Brian Krebs @briankrebs
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-maddiestone
+    locator: maddiestone
+    name: Maddie Stone @maddiestone
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-filosottile
+    locator: FiloSottile
+    name: Filippo Valsorda @FiloSottile
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-johnhammond
+    locator: _JohnHammond
+    name: John Hammond @_JohnHammond
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jhaddix
+    locator: Jhaddix
+    name: Jason Haddix @Jhaddix
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-orange-8361
+    locator: orange_8361
+    name: Orange Tsai @orange_8361
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thegrugq
+    locator: thegrugq
+    name: The Grugq @thegrugq
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-malwaretechblog
+    locator: MalwareTechBlog
+    name: Marcus Hutchins @MalwareTechBlog
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-nasa
+    locator: NASA
+    name: NASA @NASA
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cern
+    locator: CERN
+    name: CERN @CERN
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-aiatmeta
+    locator: AIatMeta
+    name: AI at Meta @AIatMeta
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-spacexai
+    locator: SpaceXAI
+    name: SpaceXAI @SpaceXAI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-huggingface
+    locator: huggingface
+    name: Hugging Face @huggingface
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-neiltyson
+    locator: neiltyson
+    name: Neil deGrasse Tyson @neiltyson
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-profbriancox
+    locator: ProfBrianCox
+    name: Brian Cox @ProfBrianCox
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-astrokatie
+    locator: AstroKatie
+    name: Katie Mack @AstroKatie
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-seanmcarroll
+    locator: seanmcarroll
+    name: Sean Carroll @seanmcarroll
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-skdh
+    locator: skdh
+    name: Sabine Hossenfelder @skdh
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-bgreene
+    locator: bgreene
+    name: Brian Greene @bgreene
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jimalkhalili
+    locator: jimalkhalili
+    name: Jim Al-Khalili @jimalkhalili
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jannalevin
+    locator: JannaLevin
+    name: Janna Levin @JannaLevin
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cmdr-hadfield
+    locator: Cmdr_Hadfield
+    name: Chris Hadfield @Cmdr_Hadfield
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-badastronomer
+    locator: BadAstronomer
+    name: Phil Plait @BadAstronomer
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-david-kipping
+    locator: david_kipping
+    name: David Kipping @david_kipping
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-drbecky
+    locator: drbecky_
+    name: Becky Smethurst @drbecky_
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-davidrliu
+    locator: davidrliu
+    name: David R. Liu @davidrliu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-mbeisen
+    locator: mbeisen
+    name: Michael Eisen @mbeisen
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-carlzimmer
+    locator: carlzimmer
+    name: Carl Zimmer @carlzimmer
+    enabled: false
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-edyong209
+    locator: edyong209
+    name: Ed Yong @edyong209
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-erictopol
+    locator: EricTopol
+    name: Eric Topol @EricTopol
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-drsidmukherjee
+    locator: DrSidMukherjee
+    name: Siddhartha Mukherjee @DrSidMukherjee
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-stanford-chemh
+    locator: Stanford_ChEMH
+    name: Stanford Sarafan ChEM-H @Stanford_ChEMH
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dereklowe
+    locator: Dereklowe
+    name: Derek Lowe @Dereklowe
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-compoundchem
+    locator: CompoundChem
+    name: Compound Interest @CompoundChem
+    enabled: false
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-profdaveleigh
+    locator: ProfDaveLeigh
+    name: David Leigh @ProfDaveLeigh
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-stevenstrogatz
+    locator: stevenstrogatz
+    name: Steven Strogatz @stevenstrogatz
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jsellenberg
+    locator: JSEllenberg
+    name: Jordan Ellenberg @JSEllenberg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-standupmaths
+    locator: standupmaths
+    name: Matt Parker @standupmaths
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-fryrsquared
+    locator: FryRsquared
+    name: Hannah Fry @FryRsquared
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-wtgowers
+    locator: wtgowers
+    name: Timothy Gowers @wtgowers
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-johncarlosbaez
+    locator: johncarlosbaez
+    name: John Baez @johncarlosbaez
+    enabled: false
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-3blue1brown
+    locator: 3blue1brown
+    name: 3Blue1Brown @3blue1brown
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dreugeniacheng
+    locator: DrEugeniaCheng
+    name: Eugenia Cheng @DrEugeniaCheng
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-phoenixyin13
+    locator: Phoenixyin13
+    name: Phoenix Yin @Phoenixyin13
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dotey
+    locator: dotey
+    name: 宝玉 @dotey
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-vista8
+    locator: vista8
+    name: 向阳乔木 @vista8
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-op7418
+    locator: op7418
+    name: 歸藏 @op7418
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-xiaohu
+    locator: xiaohu
+    name: 小互 @xiaohu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-oran-ge
+    locator: oran_ge
+    name: Orange AI @oran_ge
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-gorden-sun
+    locator: Gorden_Sun
+    name: Gorden Sun @Gorden_Sun
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lijigang
+    locator: lijigang
+    name: 李继刚 @lijigang
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lxfater
+    locator: lxfater
+    name: 铁锤人 @lxfater
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-khazix0918
+    locator: Khazix0918
+    name: 数字生命卡兹克 @Khazix0918
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-alchainhust
+    locator: AlchainHust
+    name: 花叔 @AlchainHust
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-wshuyi
+    locator: wshuyi
+    name: Wang Shuyi @wshuyi
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-kaifulee
+    locator: kaifulee
+    name: 李开复 @kaifulee
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-goocarlos
+    locator: goocarlos
+    name: Luyu Zhang @goocarlos
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-shao-meng
+    locator: shao__meng
+    name: meng shao @shao__meng
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-thinkingjimmy
+    locator: thinkingjimmy
+    name: JimmyWong @thinkingjimmy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-yetone
+    locator: yetone
+    name: yetone @yetone
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-axtonliu
+    locator: AxtonLiu
+    name: Axton @AxtonLiu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-wong2
+    locator: wong2__
+    name: wong2 @wong2__
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cydiar404
+    locator: Cydiar404
+    name: Cydiar @Cydiar404
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-zho-zho-zho
+    locator: ZHO_ZHO_ZHO
+    name: -Zho- @ZHO_ZHO_ZHO
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hq4ai
+    locator: hq4ai
+    name: 汗青 HQ @hq4ai
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-berryxia
+    locator: berryxia
+    name: Berryxia.AI @berryxia
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-yupi996
+    locator: yupi996
+    name: 程序员鱼皮 @yupi996
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-real-kai42
+    locator: real_kai42
+    name: Kai @real_kai42
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-lifesinger
+    locator: lifesinger
+    name: Frank Wang 玉伯 @lifesinger
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ruanyf
+    locator: ruanyf
+    name: 阮一峰 @ruanyf
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-xushiwei
+    locator: xushiwei
+    name: 许式伟 @xushiwei
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-skywind3000
+    locator: skywind3000
+    name: 韦易笑 @skywind3000
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cloudwu
+    locator: cloudwu
+    name: 云风 @cloudwu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-spacewander-lzx
+    locator: spacewander_lzx
+    name: Zexuan Luo @spacewander_lzx
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-piglei
+    locator: Piglei
+    name: Piglei @Piglei
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-diygod
+    locator: DIYgod
+    name: DIYgod @DIYgod
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dexteryy
+    locator: dexteryy
+    name: Dexter Yang @dexteryy
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-luoleiorg
+    locator: luoleiorg
+    name: 罗磊 @luoleiorg
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-barret-china
+    locator: Barret_china
+    name: Barret 李靖 @Barret_china
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-tombkeeper
+    locator: tombkeeper
+    name: TK 教主 @tombkeeper
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-evilcos
+    locator: evilcos
+    name: Cos 余弦 @evilcos
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-aabysszg
+    locator: AabyssZG
+    name: 曾哥 @AabyssZG
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-glzjin
+    locator: glzjin
+    name: glzjin @glzjin
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-seclink
+    locator: seclink
+    name: Y11 @seclink
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hitw93
+    locator: HiTw93
+    name: Tw93 @HiTw93
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-i5ting
+    locator: i5ting
+    name: 狼叔 i5ting @i5ting
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cuimao
+    locator: CuiMao
+    name: CuiMao @CuiMao
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-saitowu
+    locator: SaitoWu
+    name: Saito @SaitoWu
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-xdash
+    locator: XDash
+    name: 范冰 @XDash
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dongxi-nlp
+    locator: dongxi_nlp
+    name: 马东锡NLP @dongxi_nlp
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jiqizhixin
+    locator: jiqizhixin
+    name: 机器之心 @jiqizhixin
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-waytoagi
+    locator: WaytoAGI
+    name: WaytoAGI @WaytoAGI
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-github-daily
+    locator: GitHub_Daily
+    name: GitHubDaily @GitHub_Daily
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ochyai
+    locator: ochyai
+    name: Yoichi Ochiai @ochyai
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-fladdict
+    locator: fladdict
+    name: Takayuki Fukatsu @fladdict
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-ymatsuo
+    locator: ymatsuo
+    name: Yutaka Matsuo @ymatsuo
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hillbig
+    locator: hillbig
+    name: Daisuke Okanohara @hillbig
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-kazunori-279
+    locator: kazunori_279
+    name: Kazunori Sato @kazunori_279
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-shi3z
+    locator: shi3z
+    name: Ryo Shimizu @shi3z
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jaxa-jp
+    locator: JAXA_jp
+    name: JAXA @JAXA_jp
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-matsuo-lab
+    locator: Matsuo_Lab
+    name: Matsuo-Iwasawa Lab @Matsuo_Lab
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-etienneklein
+    locator: EtienneKlein
+    name: Étienne Klein @EtienneKlein
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-dlouapre
+    locator: dlouapre
+    name: David Louapre @dlouapre
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-villanicedric
+    locator: VillaniCedric
+    name: Cédric Villani @VillaniCedric
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-cnrs
+    locator: CNRS
+    name: CNRS @CNRS
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-sciencetonnante
+    locator: SciencEtonnante
+    name: Science Étonnante @SciencEtonnante
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-quantumfracture
+    locator: QuantumFracture
+    name: QuantumFracture @QuantumFracture
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-jasantaolalla
+    locator: JaSantaolalla
+    name: Javier Santaolalla @JaSantaolalla
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-emulenews
+    locator: emulenews
+    name: Francis Villatoro @emulenews
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-agencia-sinc
+    locator: agencia_sinc
+    name: SINC @agencia_sinc
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-maithi-nk
+    locator: maithi_nk
+    name: Mai Thi Nguyen-Kim @maithi_nk
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-doktorwhatson
+    locator: DoktorWhatson
+    name: Doktor Whatson @DoktorWhatson
+    enabled: true
+    options: {}
+  - poll_seconds: 3600.0
+    id: x-hunkims
+    locator: hunkims
+    name: Sung Kim @hunkims
+    enabled: true
+    options: {}
+- id: youtube
+  plugin: youtube
+  enabled: true
+  poll_seconds: 7200.0
+  options:
+    cookie_file: ../runtime/secrets/youtube-browser-e7be810d639e.txt
+  targets:
+  - poll_seconds: 7200.0
+    id: youtube-andrejkarpathy
+    locator: https://www.youtube.com/@AndrejKarpathy
+    name: AndrejKarpathy
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-hungyileentu
+    locator: https://www.youtube.com/@HungyiLeeNTU
+    name: HungyiLeeNTU
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-yannickilcher
+    locator: https://www.youtube.com/@YannicKilcher
+    name: YannicKilcher
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-arxivinsights
+    locator: https://www.youtube.com/@ArxivInsights
+    name: ArxivInsights
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-theaiepiphany
+    locator: https://www.youtube.com/@TheAIEpiphany
+    name: TheAIEpiphany
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-umarjamilai
+    locator: https://www.youtube.com/@umarjamilai
+    name: umarjamilai
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-sebastianraschka
+    locator: https://www.youtube.com/@SebastianRaschka
+    name: SebastianRaschka
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-twominutepapers
+    locator: https://www.youtube.com/@TwoMinutePapers
+    name: TwoMinutePapers
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-natolambert
+    locator: https://www.youtube.com/@natolambert
+    name: natolambert
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-howardjeremyp
+    locator: https://www.youtube.com/@howardjeremyp
+    name: howardjeremyp
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-statquest
+    locator: https://www.youtube.com/@statquest
+    name: statquest
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-serranoacademy
+    locator: https://www.youtube.com/@SerranoAcademy
+    name: SerranoAcademy
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-shusenwang
+    locator: https://www.youtube.com/@ShusenWang
+    name: ShusenWang
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-gpumode
+    locator: https://www.youtube.com/@GPUMODE
+    name: GPUMODE
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-srush_nlp
+    locator: https://www.youtube.com/@srush_nlp
+    name: srush_nlp
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-sentdex
+    locator: https://www.youtube.com/@sentdex
+    name: sentdex
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-computerphile
+    locator: https://www.youtube.com/@Computerphile
+    name: Computerphile
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-beneater
+    locator: https://www.youtube.com/@BenEater
+    name: BenEater
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-onurmutlulectures
+    locator: https://www.youtube.com/@OnurMutluLectures
+    name: OnurMutluLectures
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-whatsacreel
+    locator: https://www.youtube.com/@WhatsACreel
+    name: WhatsACreel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-lowleveltv
+    locator: https://www.youtube.com/@LowLevelTV
+    name: LowLevelTV
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-brancheducation
+    locator: https://www.youtube.com/@BranchEducation
+    name: BranchEducation
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mollyrocket
+    locator: https://www.youtube.com/@MollyRocket
+    name: MollyRocket
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-hnasr
+    locator: https://www.youtube.com/@hnasr
+    name: hnasr
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-kleppmann
+    locator: https://www.youtube.com/@kleppmann
+    name: kleppmann
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-cmudatabasegroup
+    locator: https://www.youtube.com/@CMUDatabaseGroup
+    name: CMUDatabaseGroup
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-pragmaticengineer
+    locator: https://www.youtube.com/@pragmaticengineer
+    name: pragmaticengineer
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-modernsoftwareengineeringyt
+    locator: https://www.youtube.com/@ModernSoftwareEngineeringYT
+    name: ModernSoftwareEngineeringYT
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-codeopinion
+    locator: https://www.youtube.com/@CodeOpinion
+    name: CodeOpinion
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-milanjovanovictech
+    locator: https://www.youtube.com/@milanjovanovictech
+    name: milanjovanovictech
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-nickchapsas
+    locator: https://www.youtube.com/@nickchapsas
+    name: nickchapsas
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-bytebytego
+    locator: https://www.youtube.com/@ByteByteGo
+    name: ByteByteGo
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-antonputra
+    locator: https://www.youtube.com/@AntonPutra
+    name: AntonPutra
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jonhoo
+    locator: https://www.youtube.com/@jonhoo
+    name: jonhoo
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-tsodingdaily
+    locator: https://www.youtube.com/@TsodingDaily
+    name: TsodingDaily
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-awesomekling
+    locator: https://www.youtube.com/@awesomekling
+    name: awesomekling
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thecherno
+    locator: https://www.youtube.com/@TheCherno
+    name: TheCherno
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-arjancodes
+    locator: https://www.youtube.com/@ArjanCodes
+    name: ArjanCodes
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mcoding
+    locator: https://www.youtube.com/@mCoding
+    name: mCoding
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-anthonywritescode
+    locator: https://www.youtube.com/@anthonywritescode
+    name: anthonywritescode
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-coreyms
+    locator: https://www.youtube.com/@coreyms
+    name: coreyms
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-teej_dv
+    locator: https://www.youtube.com/@teej_dv
+    name: teej_dv
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-sebastianlague
+    locator: https://www.youtube.com/@SebastianLague
+    name: SebastianLague
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-inigoquilez
+    locator: https://www.youtube.com/@InigoQuilez
+    name: InigoQuilez
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-acerola_t
+    locator: https://www.youtube.com/@Acerola_t
+    name: Acerola_t
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-acegikmo
+    locator: https://www.youtube.com/@Acegikmo
+    name: Acegikmo
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-javidx9
+    locator: https://www.youtube.com/@javidx9
+    name: javidx9
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thecodingtrain
+    locator: https://www.youtube.com/@TheCodingTrain
+    name: TheCodingTrain
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-williamfiset-videos
+    locator: https://www.youtube.com/@WilliamFiset-videos
+    name: WilliamFiset-videos
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-reducible
+    locator: https://www.youtube.com/@Reducible
+    name: Reducible
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-liveoverflow
+    locator: https://www.youtube.com/@LiveOverflow
+    name: LiveOverflow
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-ippsec
+    locator: https://www.youtube.com/@ippsec
+    name: ippsec
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-_johnhammond
+    locator: https://www.youtube.com/@_JohnHammond
+    name: _JohnHammond
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-pwnfunction
+    locator: https://www.youtube.com/@PwnFunction
+    name: PwnFunction
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-lauriewired
+    locator: https://www.youtube.com/@lauriewired
+    name: lauriewired
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-opensecuritytraining
+    locator: https://www.youtube.com/@OpenSecurityTraining
+    name: OpenSecurityTraining
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-davidbombal
+    locator: https://www.youtube.com/@DavidBombal
+    name: DavidBombal
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-practicalnetworking
+    locator: https://www.youtube.com/@PracticalNetworking
+    name: PracticalNetworking
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jeremysitlab
+    locator: https://www.youtube.com/@JeremysITLab
+    name: JeremysITLab
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-chrisgreer
+    locator: https://www.youtube.com/@ChrisGreer
+    name: ChrisGreer
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-philslab
+    locator: https://www.youtube.com/@PhilsLab
+    name: PhilsLab
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-eevblog
+    locator: https://www.youtube.com/@EEVblog
+    name: EEVblog
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-w2aew
+    locator: https://www.youtube.com/@w2aew
+    name: w2aew
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-greatscottlab
+    locator: https://www.youtube.com/@greatscottlab
+    name: greatscottlab
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-electroboom
+    locator: https://www.youtube.com/@ElectroBOOM
+    name: ElectroBOOM
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-andreasspiess
+    locator: https://www.youtube.com/@AndreasSpiess
+    name: AndreasSpiess
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-robertferanec
+    locator: https://www.youtube.com/@RobertFeranec
+    name: RobertFeranec
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-shawnhymel
+    locator: https://www.youtube.com/@ShawnHymel
+    name: ShawnHymel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-samzeloof
+    locator: https://www.youtube.com/@SamZeloof
+    name: SamZeloof
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-curiousmarc
+    locator: https://www.youtube.com/@CuriousMarc
+    name: CuriousMarc
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thesignalpath
+    locator: https://www.youtube.com/@Thesignalpath
+    name: Thesignalpath
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-breakingtaps
+    locator: https://www.youtube.com/@BreakingTaps
+    name: BreakingTaps
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-appliedscience
+    locator: https://www.youtube.com/@AppliedScience
+    name: AppliedScience
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-huygensoptics
+    locator: https://www.youtube.com/@HuygensOptics
+    name: HuygensOptics
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-usagielectric
+    locator: https://www.youtube.com/@UsagiElectric
+    name: UsagiElectric
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-eigensteve
+    locator: https://www.youtube.com/@Eigensteve
+    name: Eigensteve
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-brianbdouglas
+    locator: https://www.youtube.com/@BrianBDouglas
+    name: BrianBDouglas
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jamesbruton
+    locator: https://www.youtube.com/@jamesbruton
+    name: jamesbruton
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-articulatedrobotics
+    locator: https://www.youtube.com/@ArticulatedRobotics
+    name: ArticulatedRobotics
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jeremyfieldingsr
+    locator: https://www.youtube.com/@JeremyFieldingSr
+    name: JeremyFieldingSr
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-stuffmadehere
+    locator: https://www.youtube.com/@StuffMadeHere
+    name: StuffMadeHere
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-engineeringexplained
+    locator: https://www.youtube.com/@EngineeringExplained
+    name: EngineeringExplained
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-practicalengineeringchannel
+    locator: https://www.youtube.com/@PracticalEngineeringChannel
+    name: PracticalEngineeringChannel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-3blue1brown
+    locator: https://www.youtube.com/@3blue1brown
+    name: 3blue1brown
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mathologer
+    locator: https://www.youtube.com/@Mathologer
+    name: Mathologer
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-michaelpennmath
+    locator: https://www.youtube.com/@MichaelPennMath
+    name: MichaelPennMath
+    enabled: false
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-drpeyam
+    locator: https://www.youtube.com/@DrPeyam
+    name: DrPeyam
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-maththebeautiful
+    locator: https://www.youtube.com/@MathTheBeautiful
+    name: MathTheBeautiful
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-blackpenredpen
+    locator: https://www.youtube.com/@blackpenredpen
+    name: blackpenredpen
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-numberphile
+    locator: https://www.youtube.com/@numberphile
+    name: numberphile
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-standupmaths
+    locator: https://www.youtube.com/@standupmaths
+    name: standupmaths
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-brightsideofmaths
+    locator: https://www.youtube.com/@brightsideofmaths
+    name: brightsideofmaths
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-richarde.borcherds7998
+    locator: https://www.youtube.com/@richarde.borcherds7998
+    name: richarde.borcherds7998
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-timothygowers0
+    locator: https://www.youtube.com/@TimothyGowers0
+    name: TimothyGowers0
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-federicoelmatematico
+    locator: https://www.youtube.com/@federicoelmatematico
+    name: federicoelmatematico
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-professorleonard
+    locator: https://www.youtube.com/@ProfessorLeonard
+    name: ProfessorLeonard
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-drtrefor
+    locator: https://www.youtube.com/@DrTrefor
+    name: DrTrefor
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mathemaniac
+    locator: https://www.youtube.com/@Mathemaniac
+    name: Mathemaniac
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-aleph0
+    locator: https://www.youtube.com/@Aleph0
+    name: Aleph0
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mutual_information
+    locator: https://www.youtube.com/@Mutual_Information
+    name: Mutual_Information
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-pbsspacetime
+    locator: https://www.youtube.com/@pbsspacetime
+    name: pbsspacetime
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-seancarroll
+    locator: https://www.youtube.com/@seancarroll
+    name: seancarroll
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-eigenchris
+    locator: https://www.youtube.com/@eigenchris
+    name: eigenchris
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-richbehiel
+    locator: https://www.youtube.com/@RichBehiel
+    name: RichBehiel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-scienceclicen
+    locator: https://www.youtube.com/@ScienceClicEN
+    name: ScienceClicEN
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-physicsexplainedvideos
+    locator: https://www.youtube.com/@PhysicsExplainedVideos
+    name: PhysicsExplainedVideos
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-lookingglassuniverse
+    locator: https://www.youtube.com/@LookingGlassUniverse
+    name: LookingGlassUniverse
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-fermilab
+    locator: https://www.youtube.com/@fermilab
+    name: fermilab
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-acollierastro
+    locator: https://www.youtube.com/@acollierastro
+    name: acollierastro
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-andrewdotsonvideos
+    locator: https://www.youtube.com/@AndrewDotsonvideos
+    name: AndrewDotsonvideos
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-veritasium
+    locator: https://www.youtube.com/@veritasium
+    name: veritasium
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-smartereveryday
+    locator: https://www.youtube.com/@SmarterEveryDay
+    name: SmarterEveryDay
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-stevemould
+    locator: https://www.youtube.com/@SteveMould
+    name: SteveMould
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-alphaphoenixchannel
+    locator: https://www.youtube.com/@AlphaPhoenixChannel
+    name: AlphaPhoenixChannel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mahesh_shenoy
+    locator: https://www.youtube.com/@Mahesh_Shenoy
+    name: Mahesh_Shenoy
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-drbecky
+    locator: https://www.youtube.com/@DrBecky
+    name: DrBecky
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-sixtysymbols
+    locator: https://www.youtube.com/@sixtysymbols
+    name: sixtysymbols
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-nilered
+    locator: https://www.youtube.com/@NileRed
+    name: NileRed
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-nurdrage
+    locator: https://www.youtube.com/@NurdRage
+    name: NurdRage
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-periodicvideos
+    locator: https://www.youtube.com/@periodicvideos
+    name: periodicvideos
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-explosionsandfire
+    locator: https://www.youtube.com/@ExplosionsAndFire
+    name: ExplosionsAndFire
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-that_chemist
+    locator: https://www.youtube.com/@That_Chemist
+    name: That_Chemist
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-chemicalforce
+    locator: https://www.youtube.com/@ChemicalForce
+    name: ChemicalForce
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thecodyreeder
+    locator: https://www.youtube.com/@theCodyReeder
+    name: theCodyReeder
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-totalsynthesis
+    locator: https://www.youtube.com/@totalsynthesis
+    name: totalsynthesis
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-tmpchem
+    locator: https://www.youtube.com/@TMPChem
+    name: TMPChem
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thethoughtemporium
+    locator: https://www.youtube.com/@thethoughtemporium
+    name: thethoughtemporium
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-atinygreencell
+    locator: https://www.youtube.com/@ATinyGreenCell
+    name: ATinyGreenCell
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-scicommlab
+    locator: https://www.youtube.com/@scicommlab
+    name: scicommlab
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-ninjanerdofficial
+    locator: https://www.youtube.com/@NinjaNerdOfficial
+    name: NinjaNerdOfficial
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-aklectures
+    locator: https://www.youtube.com/@AKLECTURES
+    name: AKLECTURES
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-shomusbiologyofficial
+    locator: https://www.youtube.com/@shomusbiologyofficial
+    name: shomusbiologyofficial
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-thebumblingbiochemist
+    locator: https://www.youtube.com/@thebumblingbiochemist
+    name: thebumblingbiochemist
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-microbetv
+    locator: https://www.youtube.com/@MicrobeTV
+    name: MicrobeTV
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-journeytomicro
+    locator: https://www.youtube.com/@journeytomicro
+    name: journeytomicro
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-microbehunter
+    locator: https://www.youtube.com/@Microbehunter
+    name: Microbehunter
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-primerblobs
+    locator: https://www.youtube.com/@PrimerBlobs
+    name: PrimerBlobs
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-clintsreptiles
+    locator: https://www.youtube.com/@ClintsReptiles
+    name: ClintsReptiles
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-mothlightmedia
+    locator: https://www.youtube.com/@MothLightMedia
+    name: MothLightMedia
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-evolutionsoup
+    locator: https://www.youtube.com/@EvolutionSoup
+    name: EvolutionSoup
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-statedclearly
+    locator: https://www.youtube.com/@StatedClearly
+    name: StatedClearly
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-uc4lod4ynbulkqwdov6t-kpw
+    locator: https://www.youtube.com/channel/UC4LoD4yNBuLKQwDOV6t-KPw
+    name: UC4LoD4yNBuLKQwDOV6t-KPw
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-neurochallenged
+    locator: https://www.youtube.com/@neurochallenged
+    name: neurochallenged
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-asianometry
+    locator: https://www.youtube.com/@Asianometry
+    name: Asianometry
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-acquiredfm
+    locator: https://www.youtube.com/@AcquiredFM
+    name: AcquiredFM
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-dwarkeshpatel
+    locator: https://www.youtube.com/@DwarkeshPatel
+    name: DwarkeshPatel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-technologyconnections
+    locator: https://www.youtube.com/@TechnologyConnections
+    name: TechnologyConnections
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-techtechpotato
+    locator: https://www.youtube.com/@TechTechPotato
+    name: TechTechPotato
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-highyield
+    locator: https://www.youtube.com/@HighYield
+    name: HighYield
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-chipsandcheesecc
+    locator: https://www.youtube.com/@chipsandcheesecc
+    name: chipsandcheesecc
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-explainingcomputers
+    locator: https://www.youtube.com/@ExplainingComputers
+    name: ExplainingComputers
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jeffgeerling
+    locator: https://www.youtube.com/@JeffGeerling
+    name: JeffGeerling
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-techworldwithnana
+    locator: https://www.youtube.com/@TechWorldwithNana
+    name: TechWorldwithNana
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-marginalrevolutionuniversity
+    locator: https://www.youtube.com/@MarginalRevolutionUniversity
+    name: MarginalRevolutionUniversity
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-spartacanusuals
+    locator: https://www.youtube.com/@SpartacanUsuals
+    name: SpartacanUsuals
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-moneymacro
+    locator: https://www.youtube.com/@MoneyMacro
+    name: MoneyMacro
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-econimate
+    locator: https://www.youtube.com/@econimate
+    name: econimate
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-ashleyhodgson
+    locator: https://www.youtube.com/@AshleyHodgson
+    name: AshleyHodgson
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-gametheory101
+    locator: https://www.youtube.com/@Gametheory101
+    name: Gametheory101
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jacobaclifford
+    locator: https://www.youtube.com/@JacobAClifford
+    name: JacobAClifford
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jasonwelker
+    locator: https://www.youtube.com/@JasonWelker
+    name: JasonWelker
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-aswathdamodaranonvaluation
+    locator: https://www.youtube.com/@AswathDamodaranonValuation
+    name: AswathDamodaranonValuation
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-pboyle
+    locator: https://www.youtube.com/@PBoyle
+    name: PBoyle
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-benfelixcsi
+    locator: https://www.youtube.com/@BenFelixCSI
+    name: BenFelixCSI
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-theplainbagel
+    locator: https://www.youtube.com/@ThePlainBagel
+    name: ThePlainBagel
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-pensioncraft
+    locator: https://www.youtube.com/@Pensioncraft
+    name: Pensioncraft
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-quantpy
+    locator: https://www.youtube.com/@QuantPy
+    name: QuantPy
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-dimitribianco
+    locator: https://www.youtube.com/@DimitriBianco
+    name: DimitriBianco
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-computationsinfinance
+    locator: https://www.youtube.com/ComputationsInFinance
+    name: ComputationsInFinance
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-ryanoconnellcfa
+    locator: https://www.youtube.com/@RyanOConnellCFA
+    name: RyanOConnellCFA
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-edspira
+    locator: https://www.youtube.com/@Edspira
+    name: Edspira
+    enabled: true
+    options: {}
+  - poll_seconds: 7200.0
+    id: youtube-jefftechview
+    locator: https://www.youtube.com/@JeffTechView
+    name: JeffTechView
+    enabled: true
+    options: {}

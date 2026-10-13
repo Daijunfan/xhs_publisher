@@ -1,0 +1,18 @@
+id: youtube
+kind: source
+api_version: 1
+version: 1
+entrypoint: xhs_local.plugins.sources.youtube.plugin:YouTubeSourcePlugin
+content_types: [video_pending, tech_news]
+source_options:
+  required: []
+  additional_properties: false
+  properties:
+    activation_group: {type: string, default: video_sources}
+    cookie_file: {type: string, format: existing_file}
+    chrome_profile: {type: string}
+    node_path: {type: string, format: path}
+target_options:
+  required: []
+  additional_properties: false
+  properties: {}

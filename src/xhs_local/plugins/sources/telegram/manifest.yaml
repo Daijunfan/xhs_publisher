@@ -1,0 +1,36 @@
+id: telegram
+kind: source
+api_version: 1
+version: 1
+entrypoint: xhs_local.plugins.sources.telegram.plugin:TelegramSourcePlugin
+content_types:
+  - tech_news
+source_options:
+  required:
+    - session_path
+    - lookback_hours
+    - default_post_limit
+    - max_image_bytes
+    - api_id
+    - api_hash
+    - fetch_timeout_seconds
+    - media_timeout_seconds
+  additional_properties: false
+  properties:
+    session_path: {type: string, format: existing_file}
+    lookback_hours: {type: number, minimum: 1}
+    default_post_limit: {type: integer, minimum: 1}
+    max_image_bytes: {type: integer, minimum: 1}
+    api_id: {type: integer, minimum: 1}
+    api_hash: {type: string}
+    fetch_timeout_seconds: {type: number, minimum: 1}
+    media_timeout_seconds: {type: number, minimum: 1}
+target_options:
+  required: []
+  additional_properties: false
+  properties:
+    max_items: {type: integer, minimum: 1}
+    collect_documents: {type: boolean}
+    lookback_hours: {type: number, minimum: 1}
+    max_documents: {type: integer, minimum: 1}
+    collect_timeout_seconds: {type: number, minimum: 1}

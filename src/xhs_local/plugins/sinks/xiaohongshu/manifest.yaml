@@ -1,0 +1,6 @@
+id: xiaohongshu
+kind: sink
+api_version: 1
+version: 1
+entrypoint: xhs_local.plugins.sinks.xiaohongshu.plugin:XiaohongshuSinkPlugin
+capabilities: [image_note, animated_gif, empty_text_when_explicit]

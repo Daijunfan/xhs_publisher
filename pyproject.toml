@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xhs-local"
+version = "2.0.0"
+description = "Local multi-source content pipeline for Xiaohongshu"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.11,<3",
+  "PyYAML>=6.0,<7",
+  "Telethon>=1.44,<2",
+  "cryptg>=0.5,<1",
+  "python-socks[asyncio]>=2.7,<3",
+  "Pillow>=11,<13",
+  "yt-dlp[default]>=2025.1.1",
+  "requests>=2.32,<3",
+  "playwright>=1.63,<2",
+  "faster-whisper>=1.2,<2",
+  "aiohttp>=3.12,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+xhs = "xhs_local.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+xhs_local = [
+  "plugins/**/manifest.yaml",
+  "rendering/templates/*.html",
+  "storage/migrations/*.sql",
+  "plugins/**/*.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

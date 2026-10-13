@@ -1,0 +1,26 @@
+[
+  {
+    "id": 101,
+    "text": "A useful technology album caption.",
+    "date": "2026-08-19T04:00:00+00:00",
+    "grouped_id": 9001,
+    "mime_type": "image/png",
+    "file_name": "first.png"
+  },
+  {
+    "id": 102,
+    "text": "",
+    "date": "2026-08-19T04:00:01+00:00",
+    "grouped_id": 9001,
+    "mime_type": "image/gif",
+    "file_name": "animation.gif"
+  },
+  {
+    "id": 103,
+    "text": "A standalone technology report.",
+    "date": "2026-08-19T04:01:00+00:00",
+    "grouped_id": null,
+    "mime_type": null,
+    "file_name": null
+  }
+]

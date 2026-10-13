@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Newsroom</title>
+<link rel="icon" href="data:,">
+<style>
+  *{box-sizing:border-box}html,body{margin:0;background:#fff;color:#171717;font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;background:#fff;color:inherit;border:0}button:disabled{opacity:.35;cursor:default}a{color:inherit;text-decoration:none}
+  nav{position:sticky;top:0;z-index:3;display:flex;justify-content:center;gap:30px;padding:0 16px;background:#fff;border-bottom:1px solid #eee}
+  .tab{padding:20px 0 16px;color:#888;border-bottom:2px solid transparent;white-space:nowrap}.tab.active{color:#111;border-color:#111}.tab span{font-size:11px;margin-left:5px;font-variant-numeric:tabular-nums}
+  .import-open{font-size:23px;padding:0 3px;color:#777}.unfollow{padding:0;font-size:12px;color:#888;white-space:nowrap}
+  dialog{width:min(520px,calc(100% - 32px));padding:24px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#222}dialog::backdrop{background:#0002}.import-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-size:16px}.import-heading button{font-size:22px;color:#777;padding:0}dialog label{display:block;font-size:13px;margin-bottom:8px}dialog textarea{display:block;width:100%;resize:vertical;min-height:150px;border:1px solid #ddd;border-radius:4px;padding:10px;font:inherit;font-size:13px;line-height:1.7;background:#fff;color:#222}.import-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:16px}.import-actions button{border:1px solid #ddd;padding:7px 20px;border-radius:4px}.import-error{color:#b32323;font-size:12px;margin-top:10px;white-space:pre-wrap}
+  main{max-width:1320px;margin:24px auto;padding:0 20px}.feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 22px;align-items:start}
+  .post{position:relative;min-width:0}.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.slides::-webkit-scrollbar{display:none}.slides>a{flex:0 0 100%;min-width:0;scroll-snap-align:start}.poster{display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:contain}
+  .placeholder{display:grid;place-items:center;width:100%;aspect-ratio:3/4}.spinner{width:21px;height:21px;border:2px solid #eee;border-top-color:#777;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  .delete{position:absolute;z-index:2;right:9px;top:9px;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;color:#555;box-shadow:0 1px 6px #0002;font-size:23px;line-height:1}.delete:hover{color:#111;background:#f5f5f5}
+  .actions{display:flex;align-items:center;gap:20px;padding:10px 9px 0;color:#888;font-size:12px}.save{padding:0;color:#888;font-size:12px}.save.saved{color:#111}.original{margin-left:auto}.arrows{display:flex;align-items:center;gap:12px}.arrows button{padding:0 4px;font-size:17px;color:#777}.arrows span{font-size:11px}
+  .pager{display:flex;justify-content:center;align-items:center;gap:25px;margin:32px 0;color:#777;font-size:12px}.pager button{padding:8px 12px}.pager[hidden]{display:none}
+  .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:#fff;color:#333;border:1px solid #ddd;border-radius:6px;padding:10px 18px;box-shadow:0 3px 15px #0001;z-index:10}.toast[hidden]{display:none}
+  :focus-visible{outline:2px solid #555;outline-offset:4px}
+  @media(max-width:700px){nav{gap:15px;padding:0 8px}.tab{font-size:12px;padding:17px 0 13px}.tab span{font-size:10px;margin-left:3px}main{padding:0 8px;margin:14px auto}.feed{grid-template-columns:1fr;gap:22px}.actions{padding:9px 12px 0;gap:13px}.delete{top:8px;right:8px}}
+</style>
+</head>
+<body>
+<nav aria-label="分类">
+  <button class="tab active" data-source="" aria-current="page">全部<span id="count-all">0</span></button>
+  <button class="tab" data-source="telegram">Telegram<span id="count-telegram">0</span></button>
+  <button class="tab" data-source="x">X<span id="count-x">0</span></button>
+  <button class="tab" data-source="youtube">YouTube<span id="count-youtube">0</span></button>
+  <button class="tab" data-source="favorites">收藏<span id="count-favorites">0</span></button>
+  <button class="import-open" id="import-open" aria-label="导入博主" title="导入博主">＋</button>
+</nav>
+<dialog id="import-dialog" aria-labelledby="import-title">
+  <form id="import-form">
+    <div class="import-heading"><span id="import-title">导入博主</span><button type="button" id="import-close" aria-label="关闭导入">×</button></div>
+    <label for="creator-links">X / YouTube 主页链接，每行一个</label>
+    <textarea id="creator-links" required maxlength="20000" placeholder="https://x.com/karpathy&#10;https://www.youtube.com/@AndrejKarpathy"></textarea>
+    <div class="import-error" id="import-error" role="alert"></div>
+    <div class="import-actions"><button type="submit" id="import-submit">导入</button></div>
+  </form>
+</dialog>
+<main>
+  <section class="feed" id="feed" aria-label="帖子"></section>
+  <div class="pager" id="pager" hidden><button id="prev" aria-label="上一页">←</button><span id="page"></span><button id="next" aria-label="下一页">→</button></div>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+  const $ = selector => document.querySelector(selector);
+  let source='', page=1, pages=1, request, busy=false, posts=new Map();
+  function node(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el;}
+  function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;setTimeout(()=>$('#toast').hidden=true,3000);}
+  function safeLink(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)?u.href:null;}catch{return null;}}
+  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){observer.unobserve(entry.target);entry.target.loadPosters();}},{rootMargin:'500px'});
+  function makePost(item){
+    const post=node('article','post'),slides=node('div','slides'),placeholder=node('div','placeholder'),actions=node('div','actions');
+    post.dataset.id=item.record_id;placeholder.append(node('span','spinner'));slides.append(placeholder);
+    const remove=node('button','delete','×');remove.setAttribute('aria-label','删除帖子');remove.title='删除';
+    remove.onclick=async()=>{
+      if(busy)return;busy=true;if(request)request.abort();observer.unobserve(post);post.remove();
+      try{const r=await fetch('/api/news/'+encodeURIComponent(item.record_id),{method:'DELETE'});if(!r.ok)throw Error();posts.delete(item.record_id);}
+      catch{toast('删除失败，请重试');}
+      finally{busy=false;await load();}
+    };
+    const save=node('button','save'+(item.favorite?' saved':''),item.favorite?'★ 已收藏':'☆ 收藏');save.setAttribute('aria-pressed',String(item.favorite));
+    save.onclick=async()=>{
+      if(busy)return;busy=true;save.disabled=true;if(request)request.abort();
+      try{const r=await fetch('/api/news/'+encodeURIComponent(item.record_id)+'/favorite',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({favorite:!item.favorite})});if(!r.ok)throw Error();}
+      catch{toast('收藏失败，请重试');}
+      finally{busy=false;save.disabled=false;await load();}
+    };
+    actions.append(save);
+    if(['x','youtube'].includes(item.plugin_id)){
+      const unfollow=node('button','unfollow',item.following===false?'已取消关注':'取消关注博主');unfollow.disabled=item.following===false;unfollow.title=item.source_name;
+      unfollow.onclick=async()=>{
+        if(busy)return;busy=true;unfollow.disabled=true;if(request)request.abort();
+        try{const response=await fetch('/api/news/'+encodeURIComponent(item.record_id)+'/author',{method:'DELETE'});const result=await response.json();if(!response.ok)throw Error(result.error||'取消关注失败');toast('已取消关注 '+result.name);}
+        catch(error){toast(error.message);unfollow.disabled=false;}
+        finally{busy=false;await load();}
+      };actions.append(unfollow);
+    }
+    const controls=node('div','arrows');actions.append(controls);
+    const url=safeLink(item.source_url);if(url){const original=node('a','original','原文 ↗');original.href=url;original.target='_blank';original.rel='noopener noreferrer';actions.append(original);}
+    post.append(remove,slides,actions);
+    post.loadPosters=async()=>{
+      try{
+        const response=await fetch('/api/news/'+encodeURIComponent(item.record_id)+'/cards');if(!response.ok)throw Error();const data=await response.json();
+        if(!post.isConnected)return;
+        const images=data.images.map((url,index)=>{const link=node('a'),img=node('img','poster');link.href=url;link.target='_blank';link.rel='noopener';img.src=url;img.alt=(item.title||item.source_name)+' '+(index+1)+'/'+data.images.length;img.loading=index?'lazy':'eager';link.append(img);return link;});
+        slides.replaceChildren(...images);
+        if(images.length>1){
+          const prev=node('button','','‹'),counter=node('span','','1 / '+images.length),next=node('button','','›');prev.setAttribute('aria-label','上一张');next.setAttribute('aria-label','下一张');
+          prev.onclick=()=>slides.scrollBy({left:-slides.clientWidth,behavior:'smooth'});next.onclick=()=>slides.scrollBy({left:slides.clientWidth,behavior:'smooth'});
+          slides.onscroll=()=>{const index=Math.round(slides.scrollLeft/slides.clientWidth);counter.textContent=(index+1)+' / '+images.length;prev.disabled=index===0;next.disabled=index===images.length-1;};prev.disabled=true;controls.replaceChildren(prev,counter,next);
+        }
+      }catch{if(post.isConnected){const retry=node('button','','重试');retry.onclick=()=>{placeholder.replaceChildren(node('span','spinner'));post.loadPosters();};placeholder.replaceChildren(retry);}}
+    };
+    return post;
+  }
+  async function load(){
+    if(busy)return;if(request)request.abort();const controller=new AbortController();request=controller;
+    const params=new URLSearchParams({source:source==='favorites'?'':source,page:String(page)});if(source==='favorites')params.set('favorites','1');
+    try{
+      const response=await fetch('/api/news?'+params,{signal:controller.signal});if(!response.ok)throw Error();const data=await response.json();if(controller.signal.aborted)return;
+      pages=Math.max(1,Math.ceil(data.total/data.page_size));if(page>pages){page=pages;return load();}
+      $('#count-all').textContent=Object.values(data.counts).reduce((a,b)=>a+b,0);for(const key of ['telegram','x','youtube'])$('#count-'+key).textContent=data.counts[key]||0;$('#count-favorites').textContent=data.favorite_count;
+      $('#pager').hidden=pages===1;$('#page').textContent=page+' / '+pages;$('#prev').disabled=page===1;$('#next').disabled=page===pages;
+      const nextPosts=new Map(),elements=[];
+      for(const item of data.items){const key=JSON.stringify(item),existing=posts.get(item.record_id);const value=existing&&existing.key===key?existing:{key,element:makePost(item)};nextPosts.set(item.record_id,value);elements.push(value.element);}
+      for(const [id,value] of posts)if(nextPosts.get(id)!==value)observer.unobserve(value.element);
+      const changed=elements.length!==$('#feed').children.length||elements.some((el,index)=>el!==$('#feed').children[index]);if(changed)$('#feed').replaceChildren(...elements);
+      for(const [id,value] of nextPosts)if(posts.get(id)!==value)observer.observe(value.element);posts=nextPosts;
+    }catch(error){if(error.name!=='AbortError')toast('加载失败，稍后重试');}
+  }
+  document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
+    if(busy)return;source=tab.dataset.source;page=1;document.querySelectorAll('.tab').forEach(button=>{button.classList.toggle('active',button===tab);if(button===tab)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});load();window.scrollTo(0,0);
+  });
+  $('#import-open').onclick=()=>{if(!busy){$('#import-error').textContent='';$('#import-dialog').showModal();$('#creator-links').focus();}};
+  $('#import-close').onclick=()=>{if(!busy)$('#import-dialog').close();};
+  $('#import-dialog').addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+  $('#import-form').onsubmit=async event=>{
+    event.preventDefault();if(busy)return;busy=true;if(request)request.abort();$('#import-submit').disabled=true;$('#import-error').textContent='';
+    try{
+      const links=$('#creator-links').value.split(/[\s,，]+/).filter(Boolean);
+      const response=await fetch('/api/subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({links})});const result=await response.json();if(!response.ok)throw Error(result.error||'导入失败');
+      const added=result.results.filter(item=>item.status!=='existing').length;$('#import-dialog').close();$('#creator-links').value='';toast(added?'已关注 '+added+' 位博主':'这些博主已经关注');
+    }catch(error){$('#import-error').textContent=error.message;}
+    finally{busy=false;$('#import-submit').disabled=false;await load();}
+  };
+  $('#prev').onclick=()=>{if(page>1){page--;load();window.scrollTo(0,0);}};$('#next').onclick=()=>{if(page<pages){page++;load();window.scrollTo(0,0);}};
+  setInterval(()=>{if(!document.hidden&&page===1)load();},10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});load();
+</script>
+</body>
+</html>

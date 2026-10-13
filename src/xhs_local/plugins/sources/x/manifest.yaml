@@ -1,0 +1,28 @@
+id: x
+kind: source
+api_version: 1
+version: 1
+entrypoint: xhs_local.plugins.sources.x.plugin:XSourcePlugin
+content_types:
+  - tech_news
+source_options:
+  required:
+    - lookback_hours
+    - max_posts_per_target
+    - max_images_per_post
+    - max_image_bytes
+    - request_timeout_seconds
+    - max_concurrency
+  additional_properties: false
+  properties:
+    lookback_hours: {type: number, minimum: 1}
+    max_posts_per_target: {type: integer, minimum: 1}
+    max_images_per_post: {type: integer, minimum: 1}
+    max_image_bytes: {type: integer, minimum: 1}
+    request_timeout_seconds: {type: number, minimum: 1}
+    max_concurrency: {type: integer, minimum: 1}
+target_options:
+  required: []
+  additional_properties: false
+  properties:
+    max_items: {type: integer, minimum: 1}

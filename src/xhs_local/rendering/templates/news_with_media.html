@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{width:${WIDTH}px;height:${HEIGHT}px}
+  :root { --ink:#111a2d; --muted:#687189; --paper:#f7f8fb; --blue:#3f6ff3; --cyan:#63d7df; --coral:#ff765f; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; width:100%; height:100%; overflow:hidden; }
+  body { color:var(--ink); background:#e9edf5; font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .canvas { --hero-height:560px; --story-gap:18px; position:relative; width:100%; height:100%; padding:42px; background:linear-gradient(145deg,#e8eefb 0%,#f8f5f0 55%,#e9f5f4 100%); }
+  .sheet { position:relative; width:100%; height:100%; overflow:hidden; border:1px solid rgba(38,54,87,.10); border-radius:44px; background:rgba(255,255,255,.94); box-shadow:0 34px 90px rgba(31,48,82,.16),0 4px 16px rgba(31,48,82,.08); }
+  .topbar { position:absolute; z-index:5; top:0; left:0; right:0; height:94px; display:flex; align-items:center; justify-content:space-between; padding:0 52px; color:white; background:linear-gradient(90deg,rgba(12,24,48,.96),rgba(23,45,84,.93)); }
+  .brand { display:flex; align-items:center; gap:17px; font-size:23px; font-weight:760; letter-spacing:.18em; }
+  .brand-mark { width:35px; height:35px; position:relative; border:2px solid rgba(255,255,255,.88); border-radius:12px; transform:rotate(45deg); }
+  .brand-mark::after { content:""; position:absolute; width:11px; height:11px; top:10px; left:10px; border-radius:50%; background:var(--cyan); box-shadow:0 0 20px rgba(99,215,223,.85); }
+  .sequence { font-family:ui-monospace,"SFMono-Regular",monospace; font-size:19px; letter-spacing:.08em; color:rgba(255,255,255,.72); }
+  .hero { position:absolute; top:94px; left:0; right:0; height:var(--hero-height); overflow:hidden; background:#17243d; }
+  .media-grid { position:absolute; inset:0; display:grid; gap:5px; background:#16213a; }
+  .media-1 { grid-template-columns:1fr; }
+  .media-2 { grid-template-columns:1fr 1fr; }
+  .media-3 { grid-template-columns:1.45fr 1fr; grid-template-rows:1fr 1fr; }
+  .media-3 .media-item-1 { grid-row:1 / 3; }
+  .media-item { margin:0; min-width:0; min-height:0; overflow:hidden; background:#24324c; }
+  .media-item img { display:block; width:100%; height:100%; object-fit:cover; filter:saturate(.94) contrast(1.03); }
+  .media-shade { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(5,15,35,.02) 45%,rgba(7,17,38,.48) 100%); }
+  .story { position:absolute; z-index:4; top:calc(94px + var(--hero-height) + var(--story-gap)); left:35px; right:35px; bottom:34px; overflow:hidden; border-radius:34px; background:rgba(255,255,255,.98); box-shadow:0 16px 48px rgba(12,29,61,.10); }
+  .copy-frame { position:absolute; top:40px; left:48px; right:48px; bottom:92px; display:flex; align-items:center; overflow:hidden; }
+  .copy-content { flex:0 0 auto; width:100%; transform-origin:center left; }
+  .meta { display:flex; align-items:center; justify-content:space-between; gap:20px; color:var(--muted); font-size:18px; letter-spacing:.06em; }
+  .source { display:flex; align-items:center; gap:12px; min-width:0; font-weight:650; }
+  .source::before { content:""; flex:0 0 auto; width:32px; height:7px; border-radius:8px; background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+  .source span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .date { flex:0 0 auto; font-family:ui-monospace,"SFMono-Regular",monospace; }
+  h1 { margin:28px 0 21px; max-width:850px; overflow-wrap:anywhere; font-size:50px; line-height:1.16; letter-spacing:-.025em; font-weight:820; }
+  h1::after { content:""; display:block; width:76px; height:8px; margin-top:23px; border-radius:8px; background:var(--coral); }
+  article { color:#273047; overflow-wrap:anywhere; font-size:28px; line-height:1.58; letter-spacing:.012em; text-align:justify; }
+  article p { margin:0; }
+  article p + p { margin-top:17px; }
+  article strong { color:#315dcc; font-weight:760; }
+  .footer { position:absolute; z-index:3; left:48px; right:48px; bottom:34px; display:flex; align-items:center; justify-content:space-between; color:#9ba2b2; background:rgba(255,255,255,.98); font-size:15px; letter-spacing:.13em; }
+  .footer::before { content:""; position:absolute; left:0; right:0; top:-18px; height:1px; background:#e7e9ef; }
+  .footer .topic { color:#5573c9; font-weight:750; }
+  .dense h1 { font-size:43px; margin-top:21px; margin-bottom:16px; }
+  .dense h1::after { margin-top:16px; }
+  .dense article { font-size:25px; line-height:1.48; }
+  .dense article p + p { margin-top:10px; }
+</style></head>
+<body>
+  <div class="canvas ${DENSE} has-media">
+    <div class="sheet">
+      <header class="topbar"><div class="brand"><i class="brand-mark"></i>科技资讯简报</div><div class="sequence">${SEQUENCE}</div></header>
+      <div class="hero">${MEDIA}</div>
+      <main class="story">
+        <div class="copy-frame"><div class="copy-content">
+          <div class="meta"><div class="source"><span>${SOURCE}</span></div><div class="date">${DATE_LABEL}</div></div>
+          <h1>${HEADLINE}</h1>
+          <article>${TEXT}</article>
+        </div></div>
+        <footer class="footer"><span>CURATED TECH INTELLIGENCE</span><span class="topic">READ · THINK · SHARE</span></footer>
+      </main>
+    </div>
+  </div>
+  <script>
+  const canvas = document.querySelector('.canvas');
+  const sheet = document.querySelector('.sheet');
+  const hero = document.querySelector('.hero');
+  const story = document.querySelector('.story');
+  const frame = document.querySelector('.copy-frame');
+  const content = document.querySelector('.copy-content');
+  const article = document.querySelector('article');
+  const title = document.querySelector('h1');
+  const footer = document.querySelector('.footer');
+
+  // Give short stories more visual area instead of leaving a fixed, empty text panel.
+  // The constants correspond to the topbar, story gap, story bottom, and text/footer chrome.
+  const outsideStory = 146;
+  const minimumStoryHeight = Math.min(480, sheet.clientHeight * .48);
+  const minimumHeroHeight = Math.min(340, sheet.clientHeight * .25);
+  const maximumHeroHeight = Math.max(
+    minimumHeroHeight,
+    sheet.clientHeight - outsideStory - minimumStoryHeight,
+  );
+  const desiredStoryHeight = Math.max(minimumStoryHeight, content.scrollHeight + 204);
+  const balancedHeroHeight = sheet.clientHeight - outsideStory - desiredStoryHeight;
+  const heroHeight = Math.max(
+    minimumHeroHeight,
+    Math.min(maximumHeroHeight, balancedHeroHeight),
+  );
+  canvas.style.setProperty('--hero-height', heroHeight + 'px');
+
+  let articleSize = Number.parseFloat(getComputedStyle(article).fontSize);
+  let titleSize = Number.parseFloat(getComputedStyle(title).fontSize);
+  const overflows = () => {
+    const frameRect = frame.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    return contentRect.top < frameRect.top - 1 ||
+      contentRect.bottom > frameRect.bottom + 1 ||
+      contentRect.right > frameRect.right + 1;
+  };
+  while (overflows() && articleSize > 18) {
+    articleSize -= 1;
+    article.style.fontSize = articleSize + 'px';
+    article.style.lineHeight = '1.43';
+  }
+  while (overflows() && titleSize > 32) {
+    titleSize -= 1;
+    title.style.fontSize = titleSize + 'px';
+  }
+  let scale = 1;
+  for (let pass = 0; pass < 8 && overflows(); pass += 1) {
+    const frameRect = frame.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    scale *= Math.min(.98, (frameRect.height - 2) / contentRect.height);
+    content.style.width = (100 / scale) + '%';
+    content.style.transform = 'scale(' + scale + ')';
+  }
+
+  const heroRect = hero.getBoundingClientRect();
+  const storyRect = story.getBoundingClientRect();
+  const frameRect = frame.getBoundingClientRect();
+  const contentRect = content.getBoundingClientRect();
+  const articleRect = article.getBoundingClientRect();
+  const footerRect = footer.getBoundingClientRect();
+  const bottomWhitespace = Math.max(0, footerRect.top - articleRect.bottom);
+  const maximumBalancedWhitespace = Math.max(140, storyRect.height * .28);
+  const layoutValid =
+    storyRect.top >= heroRect.bottom + 12 &&
+    frameRect.bottom <= footerRect.top - 18 &&
+    contentRect.top >= frameRect.top - 1 &&
+    articleRect.bottom <= frameRect.bottom + 1 &&
+    contentRect.right <= frameRect.right + 1 &&
+    bottomWhitespace <= maximumBalancedWhitespace;
+  document.body.dataset.layoutValid = String(layoutValid);
+  document.body.dataset.bottomWhitespace = String(Math.round(bottomWhitespace));
+  document.body.dataset.heroHeight = String(Math.round(heroRect.height));
+  document.body.dataset.renderReady = 'true';
+  </script>
+</body></html>

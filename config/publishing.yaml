@@ -1,0 +1,59 @@
+version: 1
+filters:
+  tech_news:
+    enabled: true
+    minimum_text_characters: 1
+routes:
+- id: telegram-tech-news-to-xiaohongshu
+  enabled: false
+  content_type: tech_news
+  source_plugins:
+  - telegram
+  - x
+  - youtube
+  processor: technology_news
+  sinks:
+  - xiaohongshu
+news:
+  publish_interval_minutes: 20
+  restart_resume_minutes: 20
+  startup_collection_timeout_seconds: 180
+  previous_day_keep_minutes: 20
+  source_publish_modes:
+    telegram: scheduled_only
+    x: scheduled_only
+    youtube: scheduled_only
+  source_immediate_five_star:
+    telegram: false
+    x: false
+    youtube: false
+  source_presentations:
+    x: original_with_chinese_translation
+  source_card_templates:
+    x: x_post.html
+    youtube: x_post.html
+  night_publish_interval_minutes: 30
+  night_start_hour: 0
+  night_end_hour: 8
+  new_post_threshold: 30
+  max_news_per_note: 18
+  first_review_model: deepseek-v4-pro
+  second_review_model: deepseek-flash
+  image_review_model: deepseek-flash
+  deepseek_key_path: ../runtime/secrets/deepseek-api-key
+  codex_fallback_enabled: false
+  codex_fallback_executable: codex
+  codex_fallback_model: gpt-5.6-luna
+  codex_fallback_timeout_seconds: 60
+sinks:
+  xiaohongshu:
+    enabled: true
+    account_id: main
+    mode: mac_safari
+    background: true
+    keep_window_open: false
+retry:
+  editorial_attempts: 3
+  editorial_base_delay_seconds: 2
+  transient_attempts: 3
+  transient_base_delay_seconds: 60

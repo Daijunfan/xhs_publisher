@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{width:${WIDTH}px;height:${HEIGHT}px}
+  :root{--ink:#111a2d;--muted:#687189;--blue:#3f6ff3;--cyan:#63d7df;--coral:#ff765f}
+  *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+  body{color:var(--ink);background:#e9edf5;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .canvas{--hero-height:520px;--story-gap:18px;position:relative;width:100%;height:100%;padding:42px;background:linear-gradient(145deg,#e8eefb 0%,#f8f5f0 55%,#e9f5f4 100%)}
+  .sheet{position:relative;width:100%;height:100%;overflow:hidden;border:1px solid rgba(38,54,87,.10);border-radius:44px;background:rgba(255,255,255,.94);box-shadow:0 34px 90px rgba(31,48,82,.16),0 4px 16px rgba(31,48,82,.08)}
+  .topbar{position:absolute;z-index:7;top:0;left:0;right:0;height:118px;display:flex;align-items:center;justify-content:space-between;padding:0 50px;color:#fff;background:linear-gradient(90deg,rgba(12,24,48,.97),rgba(23,45,84,.94));box-shadow:0 8px 28px rgba(12,29,61,.16)}
+  .profile{display:flex;min-width:0;flex:1;align-items:center;gap:20px}.profile-copy{min-width:0;display:flex;flex:1;flex-direction:column;gap:5px}
+  .profile-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:31px;font-weight:820;letter-spacing:-.015em}
+  .profile-time{color:rgba(255,255,255,.70);font:520 17px/1.2 ui-monospace,"SFMono-Regular",monospace;letter-spacing:.05em}
+  .avatar{width:88px;height:88px;flex:0 0 auto;overflow:hidden;border:3px solid #fff;border-radius:50%;background:#111a2d;box-shadow:0 5px 18px rgba(4,15,36,.24)}
+  .avatar img{display:block;width:100%;height:100%;object-fit:cover}.avatar-fallback{display:grid;width:100%;height:100%;place-items:center;color:#fff;font:800 24px/1 system-ui}
+  .x-mark{display:grid;width:48px;height:48px;place-items:center;color:#fff}.x-mark svg{display:block;width:39px;height:39px;fill:currentColor}
+  .platform-label{display:none}.video-platform .x-mark{width:115px;flex:0 0 115px}.video-platform .x-mark svg{display:none}.video-platform .platform-label{display:block;font-size:22px;font-weight:800}.video-platform .profile-name{font-size:28px}
+  .hero{position:absolute;z-index:2;top:118px;left:0;right:0;height:var(--hero-height);overflow:hidden;background:#17243d}
+  .media-grid{position:absolute;inset:0;display:grid;gap:5px;background:#16213a}.media-1{grid-template-columns:1fr}.media-2{grid-template-columns:1fr 1fr}.media-3{grid-template-columns:1.45fr 1fr;grid-template-rows:1fr 1fr}.media-3 .media-item-1{grid-row:1/3}
+  .media-item{position:relative;margin:0;min-width:0;min-height:0;overflow:hidden;background:#24324c}.media-item img{display:block;width:100%;height:100%}
+  .media-backdrop{position:absolute;inset:-28px;width:calc(100% + 56px)!important;height:calc(100% + 56px)!important;object-fit:cover;filter:blur(24px) saturate(.90);opacity:.46;transform:scale(1.06)}
+  .media-main{position:relative;z-index:1;object-fit:contain;filter:saturate(.98) contrast(1.02) drop-shadow(0 8px 18px rgba(7,17,38,.18))}
+  .media-shade{position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(5,15,35,.02) 55%,rgba(7,17,38,.28))}
+  .story{position:absolute;z-index:4;top:calc(118px + var(--hero-height) + var(--story-gap));left:35px;right:35px;bottom:34px;overflow:hidden;border-radius:34px;background:rgba(255,255,255,.98);box-shadow:0 16px 48px rgba(12,29,61,.10)}
+  .copy-frame{position:absolute;top:42px;left:50px;right:50px;bottom:92px;display:flex;align-items:center;overflow:hidden}.copy-content{width:100%;flex:0 0 auto;transform-origin:center left}
+  h1{margin:0 0 25px;max-width:850px;overflow-wrap:anywhere;font-size:50px;font-weight:820;line-height:1.16;letter-spacing:-.025em;text-wrap:balance}
+  h1::after{content:"";display:block;width:76px;height:8px;margin-top:23px;border-radius:8px;background:var(--coral)}
+  article{overflow-wrap:anywhere;color:#273047;font-size:28px;line-height:1.58;letter-spacing:.012em;text-align:justify}article p{margin:0}article p+p{margin-top:17px}article strong{color:#315dcc;font-weight:760}
+  .footer{position:absolute;z-index:5;left:50px;right:50px;bottom:34px;display:flex;align-items:center;justify-content:space-between;color:#9ba2b2;background:rgba(255,255,255,.98);font:650 14px/1 ui-monospace,"SFMono-Regular",monospace;letter-spacing:.11em}
+  .footer::before{content:"";position:absolute;left:0;right:0;top:-18px;height:1px;background:#e7e9ef}.footer .topic{color:#5573c9;font-weight:750}
+  .dense h1{font-size:43px;margin-bottom:18px}.dense article{font-size:24px;line-height:1.48}.dense article p+p{margin-top:10px}
+  .no-media .hero{display:none}.no-media .story{top:144px;left:35px;right:35px;bottom:34px;background:radial-gradient(circle at 92% 12%,rgba(99,215,223,.12),transparent 25%),linear-gradient(150deg,#fbfcff,#f3f7fb)}
+  .no-media .copy-frame{top:60px;left:70px;right:70px;bottom:105px}.no-media h1{font-size:70px;line-height:1.08;letter-spacing:-.045em;margin-bottom:38px}.no-media h1::after{width:100px;height:10px;margin-top:27px;background:linear-gradient(90deg,var(--coral),#ffb36e)}
+  .no-media article{font-size:38px;line-height:1.55;text-align:left}.no-media article p{padding-left:22px;border-left:5px solid rgba(63,111,243,.18)}.no-media.dense article{font-size:31px;line-height:1.49}
+  .x-story{--story-font:38px;--story-leading:1.55;--story-title:70px;--title-leading:1.08}
+  .canvas.x-story{width:${WIDTH}px;height:${HEIGHT}px}
+  .x-photo-story{--story-font:28px;--story-leading:1.58;--story-title:50px;--title-leading:1.16}
+  .canvas.x-story article{font-size:var(--story-font);line-height:var(--story-leading)}
+  .canvas.x-story h1{font-size:var(--story-title);line-height:var(--title-leading)}
+  .canvas.x-photo-story h1{margin-bottom:25px;letter-spacing:-.025em}
+  .canvas.x-photo-story h1::after{width:76px;height:8px;margin-top:23px}
+</style></head>
+<body>
+  <div class="canvas x-variant-${VARIANT} ${HAS_MEDIA} ${DENSE} ${PLATFORM_CLASS}"><div class="sheet">
+    <header class="topbar"><div class="profile"><div class="avatar">${AVATAR}</div><div class="profile-copy"><div class="profile-name">${SOURCE}</div><time class="profile-time">${DATE_LABEL} · ${SEQUENCE}</time></div></div><div class="x-mark"><svg viewBox="0 0 24 24" aria-label="X"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-6.617l-5.184-6.777-5.93 6.777H2.587l7.894-9.02L1.392 1.154H8.01l4.688 6.2zm-1.292 19.49h2.039L6.902 3.24H4.715z"/></svg><span class="platform-label">${PLATFORM_LABEL}</span></div></header>
+    <div class="hero">${MEDIA}</div>
+    <main class="story"><div class="copy-frame"><div class="copy-content"><h1>${HEADLINE}</h1><article>${TEXT}</article></div></div><footer class="footer"><span>${FOOTER_LABEL}</span><span class="topic">READ · THINK · SHARE</span></footer></main>
+  </div></div>
+  <script>
+  const canvas=document.querySelector('.canvas'),sheet=document.querySelector('.sheet'),frame=document.querySelector('.copy-frame'),content=document.querySelector('.copy-content'),article=document.querySelector('article'),title=document.querySelector('h1'),footer=document.querySelector('.footer');
+  function sizeHero(){if(canvas.classList.contains('has-media')){const outside=170,minStory=Math.min(480,sheet.clientHeight*.43),minHero=Math.min(440,sheet.clientHeight*.34),maxHero=Math.max(minHero,sheet.clientHeight-outside-minStory),desired=Math.max(minStory,content.scrollHeight+204),hero=Math.max(minHero,Math.min(maxHero,sheet.clientHeight-outside-desired));canvas.style.setProperty('--hero-height',hero+'px')}}
+  sizeHero();
+  let articleSize=parseFloat(getComputedStyle(article).fontSize),titleSize=parseFloat(getComputedStyle(title).fontSize);const overflows=()=>{const f=frame.getBoundingClientRect(),c=content.getBoundingClientRect();return c.top<f.top-1||c.bottom>f.bottom+1||c.right>f.right+1};
+  const paginationText=${PAGINATION_TEXT};
+  if(paginationText!==null){
+    const accent=new RegExp(${ACCENT_PATTERN},'g');
+    const escape=value=>value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    // Same paragraphs and highlighted spans as render_x_text; measure the actual DOM.
+    function setText(value){
+      article.innerHTML=value.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>{
+        let html='',cursor=0;
+        for(const match of p.matchAll(accent)){html+=escape(p.slice(cursor,match.index))+'<strong>'+escape(match[0])+'</strong>';cursor=match.index+match[0].length}
+        return '<p>'+html+escape(p.slice(cursor))+'</p>';
+      }).join('\n');
+      sizeHero();
+    }
+    let remaining=Array.from(paginationText);const pages=[];
+    while(remaining.length){
+      if(pages.length){canvas.classList.remove('has-media');canvas.classList.add('no-media')}
+      let low=1,high=remaining.length,best=0;
+      while(low<=high){
+        const mid=Math.floor((low+high)/2);setText(remaining.slice(0,mid).join(''));
+        if(overflows()){high=mid-1}else{best=mid;low=mid+1}
+      }
+      if(!best)throw new Error('Story heading leaves no room for text');
+      // Prefer a nearby word/sentence boundary, never an early half-empty page.
+      if(best<remaining.length){
+        for(let end=best;end>=Math.ceil(best*.99);end--){
+          if(/[\s。！？.!?]/.test(remaining[end-1])){best=end;break}
+        }
+      }
+      pages.push(remaining.slice(0,best).join(''));remaining=remaining.slice(best);
+    }
+    const result=document.createElement('script');result.id='x-pagination';result.type='application/json';
+    result.textContent=JSON.stringify(pages).replace(/</g,'\\u003c');document.body.appendChild(result);
+  }else if(!canvas.classList.contains('x-story')){
+    while(overflows()&&articleSize>18){articleSize-=1;article.style.fontSize=articleSize+'px';article.style.lineHeight='1.43'}while(overflows()&&titleSize>32){titleSize-=1;title.style.fontSize=titleSize+'px'}let scale=1;for(let pass=0;pass<8&&overflows();pass+=1){const f=frame.getBoundingClientRect(),c=content.getBoundingClientRect();scale*=Math.min(.98,(f.height-2)/c.height);content.style.width=(100/scale)+'%';content.style.transform='scale('+scale+')'}
+  }
+  const f=frame.getBoundingClientRect(),c=content.getBoundingClientRect(),foot=footer.getBoundingClientRect();document.body.dataset.layoutValid=String(f.bottom<=foot.top-18&&c.top>=f.top-1&&c.bottom<=f.bottom+1&&c.right<=f.right+1);document.body.dataset.renderReady='true';
+  </script>
+</body></html>

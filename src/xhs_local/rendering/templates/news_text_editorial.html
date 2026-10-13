@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{width:${WIDTH}px;height:${HEIGHT}px}
+  * { box-sizing:border-box; }
+  html,body { margin:0; width:100%; height:100%; overflow:hidden; }
+  body { font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .text-poster { width:100%;height:100%;padding:42px;overflow:hidden;background:radial-gradient(circle at 50% 0,rgba(255,255,255,.52),transparent 38%),var(--outer); }
+  .poster-frame { position:relative;width:100%;height:100%;overflow:hidden;border:1px solid rgba(20,45,75,.08);border-radius:46px;padding:0;background-color:var(--paper);background-image:linear-gradient(rgba(20,45,75,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(20,45,75,.055) 1px,transparent 1px);background-size:52px 52px;box-shadow:0 30px 76px rgba(24,48,74,.17),0 5px 16px rgba(24,48,74,.07);color:var(--ink); }
+  .poster-meta { position:relative;z-index:4;height:104px;padding:0 70px;display:flex;align-items:center;justify-content:space-between;gap:28px;color:#f7fbfc;background:var(--navy);font-size:18px;font-weight:720;letter-spacing:.09em; }
+  .poster-meta .source { min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .poster-meta .date,.poster-sequence { font-family:ui-monospace,"SFMono-Regular",monospace; }
+  .poster-meta .date { color:rgba(247,251,252,.90); }
+  .poster-sequence { position:absolute;z-index:4;right:70px;bottom:66px;color:#38536c;font-size:18px;letter-spacing:.14em; }
+  .poster-copy { position:absolute;z-index:3;left:88px;right:82px;top:205px;bottom:150px;display:flex;align-items:center;overflow:hidden; }
+  .poster-content { flex:0 0 auto;width:100%;transform-origin:center left; }
+  .poster-title { margin:0 0 42px;overflow-wrap:anywhere;text-wrap:balance;font-size:84px;font-weight:850;line-height:1.06;letter-spacing:-.05em; }
+  .poster-title::after { content:"";display:block;width:110px;height:10px;margin-top:31px;border-radius:10px;background:var(--accent); }
+  .poster-body { overflow-wrap:anywhere;color:#183652;font-size:42px;line-height:1.54;letter-spacing:.01em; }
+  .poster-body p { margin:0; }.poster-body p + p { margin-top:24px; }
+  .poster-body strong { color:var(--strong);font-weight:790; }
+  .poster-footer { position:absolute;z-index:4;left:70px;bottom:69px;display:flex;align-items:center;gap:18px;color:#38536c;font:680 15px/1 ui-monospace,"SFMono-Regular",monospace;letter-spacing:.16em; }
+  .poster-footer::before { content:"";width:42px;height:6px;border-radius:6px;background:var(--accent); }
+  .poster-decor { position:absolute;z-index:1;display:block;pointer-events:none; }
+
+  .text-variant-1 { --outer:#dce8ee;--paper:#edf6f7;--navy:#132d4c;--ink:#132d4c;--accent:#d9ff59;--strong:#17618c;--secondary:#62b7c0; }
+  .text-variant-1 .poster-frame { background-image:radial-gradient(circle at 86% 12%,rgba(98,183,192,.10),transparent 22%),linear-gradient(rgba(19,45,76,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(19,45,76,.055) 1px,transparent 1px); }
+  .text-variant-1 .decor-one { width:410px;height:410px;right:-185px;top:128px;border-radius:50%;background:var(--accent); }
+  .text-variant-1 .decor-two { left:68px;top:169px;width:122px;height:13px;background:var(--navy);box-shadow:144px 0 0 var(--secondary); }
+  .text-variant-1 .decor-three { width:10px;height:10px;right:86px;bottom:225px;border-radius:50%;background:var(--navy);box-shadow:29px 0 var(--secondary),58px 0 var(--accent),0 29px var(--secondary),29px 29px var(--accent),58px 29px var(--navy);opacity:.62; }
+
+  .text-variant-2 { --outer:#d9e5e9;--paper:#eff6f5;--navy:#173b49;--ink:#17394a;--accent:#dbff5d;--strong:#127080;--secondary:#67bdc2; }
+  .text-variant-2 .poster-frame { background-size:48px 48px;background-image:radial-gradient(circle at 14% 82%,rgba(103,189,194,.12),transparent 24%),linear-gradient(rgba(23,59,73,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(23,59,73,.05) 1px,transparent 1px); }
+  .text-variant-2 .poster-meta { box-shadow:inset 0 -8px 0 var(--secondary); }
+  .text-variant-2 .poster-meta .source::before { content:"";display:inline-block;width:10px;height:10px;margin-right:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px rgba(219,255,93,.13); }
+  .text-variant-2 .poster-copy { left:104px;right:78px;top:210px; }
+  .text-variant-2 .poster-title { font-size:78px; }
+  .text-variant-2 .decor-one { width:470px;height:470px;right:-248px;bottom:-165px;border:56px solid rgba(23,59,73,.065);border-radius:50%;box-shadow:0 0 0 2px rgba(103,189,194,.16); }
+  .text-variant-2 .decor-two { left:67px;top:166px;width:11px;height:94px;border-radius:10px;background:var(--accent);box-shadow:27px 0 0 var(--secondary); }
+  .text-variant-2 .decor-three { width:120px;height:120px;right:75px;top:174px;border:2px solid rgba(23,59,73,.16);border-radius:50%;box-shadow:0 0 0 18px rgba(103,189,194,.035); }
+
+  .text-variant-3 { --outer:#dce6ed;--paper:#edf4f7;--navy:#102f53;--ink:#102f53;--accent:#d8ff58;--strong:#1b6091;--secondary:#5cabbc; }
+  .text-variant-3 .poster-meta { box-shadow:0 8px 0 rgba(92,171,188,.72); }
+  .text-variant-3 .poster-copy { left:126px;right:76px;top:212px; }
+  .text-variant-3 .poster-title { font-size:82px; }
+  .text-variant-3 .poster-body { font-size:41px; }
+  .text-variant-3 .decor-one { width:300px;height:300px;left:-170px;top:350px;border-radius:50%;background:var(--accent); }
+  .text-variant-3 .decor-two { left:83px;top:170px;width:96px;height:12px;background:var(--secondary);box-shadow:118px 0 0 var(--navy),236px 0 0 var(--accent); }
+  .text-variant-3 .decor-three { width:92px;height:92px;right:78px;bottom:206px;border:2px solid rgba(16,47,83,.19);transform:rotate(45deg);box-shadow:15px 15px 0 rgba(92,171,188,.08); }
+
+  .text-variant-4 { --outer:#d9e5ec;--paper:#ecf5f6;--navy:#142d4c;--ink:#142d4c;--accent:#d9ff58;--strong:#155f8d;--secondary:#63b7c1; }
+  .text-variant-4 .poster-frame { background-size:52px 52px;background-image:linear-gradient(rgba(20,45,76,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(20,45,76,.06) 1px,transparent 1px); }
+  .text-variant-4 .poster-copy { left:88px;right:82px;top:208px; }
+  .text-variant-4 .poster-title { font-size:84px; }
+  .text-variant-4 .decor-one { width:415px;height:415px;right:-190px;top:125px;border-radius:50%;background:var(--accent); }
+  .text-variant-4 .decor-two { left:68px;top:169px;width:120px;height:13px;background:var(--navy);box-shadow:142px 0 0 var(--secondary); }
+  .text-variant-4 .decor-three { left:68px;right:68px;bottom:111px;height:1px;background:linear-gradient(90deg,rgba(20,45,76,.12),transparent 72%); }
+
+  .text-variant-5 { --outer:#dbe7ec;--paper:#eff6f6;--navy:#173149;--ink:#173149;--accent:#d7ff55;--strong:#17667f;--secondary:#65b9c0;--warm:#ffb36e; }
+  .text-variant-5 .poster-meta { background:linear-gradient(90deg,var(--navy) 0 82%,#21465a 82%);box-shadow:inset 0 -7px 0 rgba(215,255,85,.86); }
+  .text-variant-5 .poster-copy { left:94px;right:94px;top:218px; }
+  .text-variant-5 .poster-title { font-size:78px; }
+  .text-variant-5 .poster-body { font-size:41px; }
+  .text-variant-5 .decor-one { width:390px;height:390px;right:-222px;top:170px;border:54px solid rgba(101,185,192,.13);border-radius:50%;box-shadow:0 0 0 2px rgba(23,49,73,.07); }
+  .text-variant-5 .decor-two { width:345px;height:3px;right:-25px;top:310px;background:linear-gradient(90deg,transparent,var(--navy),var(--secondary));transform:rotate(-34deg);opacity:.42; }
+  .text-variant-5 .decor-three { left:72px;top:169px;width:84px;height:12px;background:var(--accent);box-shadow:105px 0 0 var(--secondary),210px 0 0 var(--warm); }
+
+  .text-variant-6 { --outer:#d8e4ea;--paper:#edf4f5;--navy:#122a44;--ink:#122a44;--accent:#dcff5c;--strong:#176285;--secondary:#62b4c0; }
+  .text-variant-6 .poster-frame { background-size:42px 42px;background-image:radial-gradient(circle at 12% 88%,rgba(98,180,192,.12),transparent 22%),linear-gradient(rgba(18,42,68,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(18,42,68,.05) 1px,transparent 1px); }
+  .text-variant-6 .poster-meta .date { padding:10px 17px;border:1px solid rgba(220,255,92,.42);border-radius:999px; }
+  .text-variant-6 .poster-copy { left:92px;right:86px;top:214px; }
+  .text-variant-6 .poster-title { font-size:78px; }
+  .text-variant-6 .decor-one::before { content:"06";position:absolute;right:-8px;top:-8px;color:rgba(18,42,68,.055);font:900 250px/.8 ui-monospace,"SFMono-Regular",monospace;letter-spacing:-.14em; }
+  .text-variant-6 .decor-one { width:280px;height:210px;right:45px;top:150px; }
+  .text-variant-6 .decor-two { right:72px;top:270px;width:13px;height:92px;border-radius:10px;background:var(--accent);box-shadow:28px 0 0 var(--secondary); }
+  .text-variant-6 .decor-three { width:10px;height:10px;left:72px;bottom:215px;border-radius:50%;background:var(--navy);box-shadow:28px 0 var(--secondary),56px 0 var(--accent),0 28px var(--secondary),28px 28px var(--accent),56px 28px var(--navy);opacity:.58; }
+</style></head>
+<body>
+  <div class="text-poster text-variant-${VARIANT}">
+    <div class="poster-frame">
+      <i class="poster-decor decor-one"></i><i class="poster-decor decor-two"></i><i class="poster-decor decor-three"></i>
+      <header class="poster-meta"><span class="source">${SOURCE}</span><span class="date">${DATE_LABEL}</span></header>
+      <span class="poster-sequence">${SEQUENCE}</span>
+      <main class="poster-copy"><div class="poster-content">
+        <h1 class="poster-title">${HEADLINE}</h1>
+        <article class="poster-body">${TEXT}</article>
+      </div></main>
+      <footer class="poster-footer">CURATED TECH NOTE</footer>
+    </div>
+  </div>
+  <script>
+  const frame = document.querySelector('.poster-copy');
+  const content = document.querySelector('.poster-content');
+  const title = document.querySelector('.poster-title');
+  const article = document.querySelector('.poster-body');
+  let titleSize = Number.parseFloat(getComputedStyle(title).fontSize);
+  let articleSize = Number.parseFloat(getComputedStyle(article).fontSize);
+  const overflows = () => {
+    const frameRect = frame.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    return contentRect.top < frameRect.top - 1 || contentRect.bottom > frameRect.bottom + 1 ||
+      contentRect.left < frameRect.left - 1 || contentRect.right > frameRect.right + 1;
+  };
+  while (overflows() && articleSize > 28) {
+    articleSize -= 1;
+    article.style.fontSize = articleSize + 'px';
+    article.style.lineHeight = '1.45';
+  }
+  while (overflows() && titleSize > 48) {
+    titleSize -= 1;
+    title.style.fontSize = titleSize + 'px';
+  }
+  let scale = 1;
+  for (let pass = 0; pass < 8 && overflows(); pass += 1) {
+    const frameRect = frame.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    scale *= Math.min(.98, (frameRect.height - 2) / contentRect.height);
+    content.style.width = (100 / scale) + '%';
+    content.style.transform = 'scale(' + scale + ')';
+  }
+  document.body.dataset.layoutValid = String(!overflows());
+  document.body.dataset.renderReady = 'true';
+  </script>
+</body></html>

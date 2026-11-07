@@ -122,6 +122,7 @@ class XSourcePlugin:
         for post in eligible:
             request.ensure_active()
             images = []
+            downloaded_urls = []
             for index, url in enumerate(post.image_urls[: self.max_images_per_post], start=1):
                 try:
                     images.append(
@@ -132,6 +133,7 @@ class XSourcePlugin:
                             deadline=request.deadline,
                         )
                     )
+                    downloaded_urls.append(url)
                 except asyncio.CancelledError:
                     raise
                 except Exception as error:
@@ -153,6 +155,7 @@ class XSourcePlugin:
                     observed_at=observed_at,
                     avatar=avatar,
                     images=tuple(images),
+                    downloaded_image_urls=tuple(downloaded_urls),
                 )
             )
         records.sort(key=lambda record: (record.occurred_at, int(record.external_id)))

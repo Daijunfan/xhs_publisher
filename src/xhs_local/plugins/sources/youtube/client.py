@@ -14,55 +14,29 @@ from xhs_local.core.errors import AuthenticationRequired
 from ..video.client import VideoClient, channel_avatar, run_command
 
 
-def recent_uploads(info: dict, cutoff: float, resolve=None):
+def recent_uploads(info: dict, cutoff: float, resolve=None, seen_video_ids=()):
+    """Flat discovery only; exact watch metadata belongs to the durable plugin batch."""
+    known = set(seen_video_ids)
+    undated = 0
     for entry in info.get("entries") or ():
         if not isinstance(entry, dict):
             continue
         if "entries" in entry:
-            yield from recent_uploads(entry, cutoff, resolve)
+            yield from recent_uploads(entry, cutoff, seen_video_ids=known)
             continue
-        if not entry.get("timestamp") and resolve is not None and entry.get("id"):
-            try:
-                metadata = resolve(f"https://www.youtube.com/watch?v={entry['id']}")
-                entry = {
-                    **entry,
-                    "timestamp": metadata.get("release_timestamp") or metadata.get("timestamp"),
-                    "video_metadata": {
-                        key: metadata.get(key)
-                        for key in (
-                            "id",
-                            "title",
-                            "timestamp",
-                            "release_timestamp",
-                            "duration",
-                            "webpage_url",
-                            "uploader",
-                            "uploader_id",
-                            "thumbnail",
-                            "live_status",
-                        )
-                    },
-                }
-            except Exception as error:
-                if "has been rate-limited by YouTube for up to an hour" in str(error):
-                    raise
-                pass  # The source retries this individual video without dropping its peers.
-        if entry.get("timestamp") and entry["timestamp"] < cutoff:
+        timestamp = entry.get("timestamp")
+        if timestamp and timestamp < cutoff and entry.get("live_status") not in {"is_live", "is_upcoming"}:
             break
-        elif entry.get("id"):
-            yield {
-                key: entry.get(key)
-                for key in (
-                    "id",
-                    "title",
-                    "timestamp",
-                    "uploader",
-                    "uploader_id",
-                    "channel_id",
-                    "live_status",
-                    "video_metadata",
-                )
-            }
+        if not entry.get("id") or entry["id"] in known:
+            continue
+        if not timestamp:
+            undated += 1
+            if undated > 30:
+                break
+        yield {key: entry.get(key) for key in (
+            "id", "title", "timestamp", "release_timestamp", "duration",
+            "uploader", "uploader_id", "channel_id", "live_status", "video_metadata",
+        )}
 
 
 class YouTubeClient(VideoClient):
@@ -112,7 +86,7 @@ class YouTubeClient(VideoClient):
             metadata = {**metadata, "avatar_url": channel_avatar(about)}
         return await super().images(record, metadata, directory)
 
-    async def discover(self, homepage: str, activated_at: datetime) -> dict:
+    async def discover(self, homepage: str, activated_at: datetime, seen_video_ids=()) -> dict:
         arguments = [
             sys.executable,
             "-m",
@@ -121,12 +95,12 @@ class YouTubeClient(VideoClient):
             str((activated_at - timedelta(days=7)).timestamp()),
         ]
         async with self.request_slot(), self.cookies() as cookie_file:
-            arguments.extend([cookie_file or "-", str(self.node_path or "-")])
-            return json.loads(await run_command(arguments))
+            arguments.extend([cookie_file or "-", str(self.node_path or "-"), json.dumps(sorted(seen_video_ids))])
+            return json.loads(await run_command(arguments, timeout=60))
 
 
 def discover_uploads(
-    homepage: str, cutoff: float, cookie_file: str | None = None, node_path=None
+    homepage: str, cutoff: float, cookie_file: str | None = None, node_path=None, seen_video_ids=()
 ) -> dict:
     options = {
         "quiet": True,
@@ -148,9 +122,8 @@ def discover_uploads(
             "channel_id": info.get("channel_id"),
             "uploader": info.get("uploader"),
             "thumbnails": info.get("thumbnails", []),
-            "entries": list(
-                recent_uploads(info, cutoff, lambda url: ydl.extract_info(url, download=False))
-            ),
+            # VideoSourcePlugin skips seen IDs before requesting full metadata.
+            "entries": list(recent_uploads(info, cutoff, seen_video_ids=seen_video_ids)),
         }
 
 
@@ -162,6 +135,7 @@ if __name__ == "__main__":
                 float(sys.argv[2]),
                 sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] != "-" else None,
                 sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None,
+                json.loads(sys.argv[5]) if len(sys.argv) > 5 else (),
             )
         )
     )

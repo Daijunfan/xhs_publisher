@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from xhs_local.core.contracts import PublishNote, PublishResult
+from xhs_local.core.errors import PolicyRejected
 from xhs_local.plugins.contracts import HealthReport
 
 from .browser import SafariPublisher
@@ -25,9 +26,9 @@ class XiaohongshuSinkPlugin:
         *,
         require_new_title_occurrence: bool = False,
     ) -> PublishResult:
-        return await self.publisher.publish(
-            note,
-            require_new_title_occurrence=require_new_title_occurrence,
+        raise PolicyRejected(
+            "Xiaohongshu publishing is disabled; this worker only delivers news to Avalon",
+            code="XIAOHONGSHU_PUBLISHING_DISABLED",
         )
 
     async def reconcile(self, operation: Mapping[str, Any]) -> PublishResult | None:

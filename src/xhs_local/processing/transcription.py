@@ -137,8 +137,9 @@ class ParaformerClient:
 class LocalWhisperClient:
     local = True
 
-    def __init__(self, model_dir: Path) -> None:
+    def __init__(self, model_dir: Path, *, device="cuda", compute_type="float16") -> None:
         self.model_dir = model_dir
+        self.device, self.compute_type = device, compute_type
         self.model: WhisperModel | None = None
         self.lock = asyncio.Lock()
 
@@ -164,7 +165,8 @@ class LocalWhisperClient:
 
     def _transcribe(self, audio: Path, expected_duration: float) -> dict:
         if self.model is None:
-            self.model = WhisperModel(str(self.model_dir), device="cuda", compute_type="float16")
+            self.model = WhisperModel(str(self.model_dir), device=self.device, compute_type=self.compute_type,
+                                      cpu_threads=8 if self.device == "cpu" else 0)
         segments, info = self.model.transcribe(str(audio), beam_size=5, vad_filter=False)
         text = "\n\n".join(segment.text.strip() for segment in segments if segment.text.strip())
         duration = float(info.duration)

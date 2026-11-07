@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -18,10 +19,11 @@ from xhs_local.core.contracts import (
     PublishResult,
     SourceRecord,
 )
-from xhs_local.core.errors import ValidationFailure
+from xhs_local.core.errors import TransientError, ValidationFailure
 from xhs_local.core.identifiers import stable_record_id
 from xhs_local.core.states import WorkState, WorkTopic
 from xhs_local.pipeline.publisher import NewsPublicationService, _news_caption
+from xhs_local.processing.image_review import ImageReviewer
 from xhs_local.rendering.layout import paginate_text
 from xhs_local.storage.database import Database
 from xhs_local.storage.records import NewsCandidate, RecordsRepository
@@ -260,6 +262,8 @@ def _service(
         ledger=PublicationLedger(database),
         remote_operations=RemoteOperationRepository(database),
         processor=processor,
+        image_review=lambda _paths: asyncio.sleep(0, result=True),
+        final_text_review=lambda _text: asyncio.sleep(0, result=True),
         renderer=renderer,
         sink=sink,
         sink_lock=asyncio.Lock(),
@@ -371,10 +375,150 @@ def test_uncertain_submission_is_reconciled_without_resubmitting(tmp_path, remot
             )
 
 
+@pytest.mark.parametrize("reason", ["scheduled", "backlog", "backlog_five_star"])
+@pytest.mark.parametrize("avatar_only", [False, True])
+def test_second_image_rejection_excludes_text_and_all_album_members(tmp_path, reason, avatar_only):
+    database = Database(tmp_path / "app.sqlite3")
+    migrate(database)
+    try:
+        records = RecordsRepository(database, tmp_path)
+        buffer = io.BytesIO()
+        Image.new("RGB", (40, 40), "red").save(buffer, format="PNG")
+        now = datetime.now(UTC)
+        blocked = replace(
+            _record("8001", now - timedelta(minutes=2), source_name="blocked", group_id="album"),
+            attachments=(AttachmentInput("image/png", "image.png", buffer.getvalue()),),
+            payload={"avatar_attachment_index": 0} if avatar_only else {},
+        )
+        companion = _record(
+            "8002", now - timedelta(minutes=2), source_name="blocked", group_id="album"
+        )
+        allowed = replace(
+            _record("8003", now - timedelta(minutes=1), source_name="allowed"),
+            target_id="different-source",
+        )
+        for record in (blocked, companion, allowed):
+            records.upsert(record)
+        calls = []
+
+        class Vision:
+            async def complete(self, messages, *, model):
+                calls.append(messages)
+                return json.dumps(
+                    {
+                        "approved": len(calls) != 2,
+                        "reason": "clear" if len(calls) != 2 else "political",
+                    }
+                )
+
+        renderer = FakeNewsRenderer(tmp_path / "generated")
+        sink = FakeNewsSink()
+        processor = FakeProcessor()
+        _works, work = _claimed_work(database, payload={"reason": reason})
+        service = _service(
+            records=records,
+            database=database,
+            runtime_root=tmp_path,
+            processor=processor,
+            renderer=renderer,
+            sink=sink,
+            capacity=18,
+        )
+        service.image_review = ImageReviewer(Vision(), model="deepseek-flash")
+        assert asyncio.run(service(work)) == "published"
+        assert len(calls) == 4
+        assert [item.record_id for item in processor.candidates] == [allowed.record_id]
+        assert [card["record_id"] for card in renderer.cards] == [allowed.record_id]
+        with database.locked() as connection:
+            marks = {
+                r["record_id"]: r["status"]
+                for r in connection.execute("SELECT * FROM publication_marks")
+            }
+        assert marks[blocked.record_id] == marks[companion.record_id] == "skipped"
+        assert marks[allowed.record_id] == "published"
+    finally:
+        database.close()
 
 
+def test_image_review_outage_preserves_candidate_and_never_submits(tmp_path):
+    database = Database(tmp_path / "app.sqlite3")
+    migrate(database)
+    try:
+        records = RecordsRepository(database, tmp_path)
+        record = _record("8004", datetime.now(UTC) - timedelta(minutes=1), source_name="source")
+        records.upsert(record)
+        renderer, sink = FakeNewsRenderer(tmp_path / "generated"), FakeNewsSink()
+        _works, work = _claimed_work(database)
+        service = _service(
+            records=records,
+            database=database,
+            runtime_root=tmp_path,
+            processor=FakeProcessor(),
+            renderer=renderer,
+            sink=sink,
+            capacity=18,
+        )
+
+        async def unavailable(_paths):
+            raise TransientError("image review network outage")
+
+        service.image_review = unavailable
+        with pytest.raises(TransientError):
+            asyncio.run(service(work))
+        assert not PublicationLedger(database).is_marked(
+            record.record_id, sink="xiaohongshu", account_id="main"
+        )
+        assert not renderer.cards and not sink.notes
+        with database.locked() as connection:
+            assert connection.execute("SELECT count(*) FROM remote_operations").fetchone()[0] == 0
+    finally:
+        database.close()
 
 
+@pytest.mark.parametrize("phase", ["text_reject", "poster_reject", "poster_outage"])
+def test_final_publication_gates_run_before_remote_fence(tmp_path, phase):
+    database = Database(tmp_path / "app.sqlite3")
+    migrate(database)
+    try:
+        records = RecordsRepository(database, tmp_path)
+        record = _record("8801", datetime.now(UTC) - timedelta(minutes=1), source_name="technology")
+        records.upsert(record)
+        _works, work = _claimed_work(database, payload={"reason": "scheduled"})
+        renderer, sink = FakeNewsRenderer(tmp_path / "generated"), FakeNewsSink()
+        service = _service(
+            records=records,
+            database=database,
+            runtime_root=tmp_path,
+            processor=FakeProcessor(),
+            renderer=renderer,
+            sink=sink,
+            capacity=18,
+        )
+
+        async def review_images(paths):
+            if not paths:
+                return True
+            if phase == "poster_outage":
+                raise TransientError("vision unavailable")
+            return phase != "poster_reject"
+
+        service.image_review = review_images
+        service.final_text_review = lambda _text: asyncio.sleep(0, result=phase != "text_reject")
+        if phase == "poster_outage":
+            with pytest.raises(TransientError):
+                asyncio.run(service(work))
+            assert not service.ledger.is_marked(
+                record.record_id, sink="xiaohongshu", account_id="main"
+            )
+        else:
+            assert asyncio.run(service(work)) == "filtered"
+        assert sink.notes == []
+        with database.locked() as connection:
+            assert connection.execute("SELECT count(*) FROM remote_operations").fetchone()[0] == 0
+        if phase == "text_reject":
+            assert renderer.cards == []
+    finally:
+        database.close()
 
 
 @pytest.mark.parametrize("featured", ["telegram", "x", "youtube"])

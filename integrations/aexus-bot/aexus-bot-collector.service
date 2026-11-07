@@ -1,0 +1,17 @@
+[Unit]
+Description=Aexus Bot Linux channel collection and YouTube summaries
+After=network-online.target
+
+[Service]
+Type=simple
+Environment="PATH=%h/AgentsCompany/collectors/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+WorkingDirectory=%h/develop/Xhs
+ExecStart=/bin/bash -c 'eval "$(%h/.local/bin/vpn env)"; exec %h/develop/Xhs/.venv/bin/python %h/AgentsCompany/collectors/frontier.py --root %h/develop/Xhs --token-file %h/AgentsCompany/collectors/secrets/aexus-bot.token --deepseek-key-file %h/develop/Xhs/runtime/secrets/frontier-deepseek.key'
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=45
+UMask=0077
+Nice=10
+
+[Install]
+WantedBy=default.target

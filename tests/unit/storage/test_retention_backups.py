@@ -44,8 +44,6 @@ def test_online_backup_captures_schema_and_config_snapshot(
         )
 
     second = service.create(runtime_root / "backups", now=NOW + timedelta(seconds=1))
-    os.utime(first.database_path, (NOW.timestamp(), NOW.timestamp()))
-    os.utime(second.database_path, (NOW.timestamp() + 1, NOW.timestamp() + 1))
     removed = service.prune(runtime_root / "backups", keep=1)
     assert removed == [first.database_path]
     assert second.database_path.exists()
@@ -149,18 +147,17 @@ def test_news_cleanup_removes_only_orphan_video_caches(
     link.symlink_to(models, target_is_directory=True)
 
     repository.delete_news("deleted")
-    assert service.purge_news(NOW - timedelta(days=7)) == 2
+    assert service.purge_news(NOW - timedelta(days=7)) == 1
     service.purge_news_posters()
-    for key in ("retained", "active"):
+    for key in ("retained", "favorite", "active"):
         assert (caches[key] / "audio.mp3").read_bytes() == b"retained audio"
         assert repository.get(key) is not None
     assert not caches["deleted"].exists() and not caches["expired"].exists()
-    assert not caches["favorite"].exists()
     assert not orphan.root.exists()
     assert link.is_symlink() and (models / "model.bin").read_bytes() == b"model must stay"
     assert (unmanaged / "keep.txt").read_text() == "not a VideoArtifacts directory"
     assert works.get(active).state.value == "RUNNING"
-    assert repository.news_feed(favorites=True)["favorite_count"] == 0
+    assert repository.news_feed(favorites=True)["favorite_count"] == 1
 
 
 def test_video_cache_is_retained_until_last_platform_record_is_removed(

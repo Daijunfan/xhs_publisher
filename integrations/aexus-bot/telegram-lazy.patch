@@ -1,0 +1,91 @@
+--- a/src/xhs_local/plugins/sources/telegram/client.py
++++ b/src/xhs_local/plugins/sources/telegram/client.py
+@@ -317,6 +317,17 @@
+                 await self._discard_client(client)
+             raise
+         return channel_id, messages
++
++    async def fetch_document(self, target, message_id: int, *, deadline, cancellation):
++        cancellation.raise_if_cancelled()
++        async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
++            async with self._request_lock:
++                client = await self._connected_client(deadline)
++                entity = await client.get_entity(target.locator)
++                message = await client.get_messages(entity, ids=message_id)
++        if message is None or getattr(message, "document", None) is None:
++            raise FileNotFoundError("The original Telegram document is unavailable")
++        return int(self._peer_id_factory(entity)), message
+ 
+     async def channel_avatar(
+         self,
+--- a/src/xhs_local/plugins/sources/telegram/plugin.py
++++ b/src/xhs_local/plugins/sources/telegram/plugin.py
+@@ -73,6 +73,7 @@
+         unknown = set(target.options) - {
+             "max_items",
+             "collect_documents",
++            "document_metadata_only",
+             "lookback_hours",
+             "max_documents",
+             "collect_timeout_seconds",
+@@ -137,6 +138,7 @@
+             raise PluginContractError("CollectRequest observed_at must include timezone")
+         observed_at = observed_at.astimezone(UTC)
+         documents = bool(request.target.options.get("collect_documents", False))
++        metadata_only = bool(request.target.options.get("document_metadata_only", False))
+         cutoff = observed_at - timedelta(
+             hours=float(request.target.options.get("lookback_hours", self.lookback_hours))
+         )
+@@ -170,7 +172,9 @@
+             media = None
+             thumbnail = None
+             try:
+-                if documents and document_message(message):
++                if documents and document_message(message) and metadata_only:
++                    document_count += 1
++                elif documents and document_message(message):
+                     if document_count >= int(request.target.options.get("max_documents", 1)):
+                         break
+                     media = await self.transport.download_document(
+@@ -219,17 +223,20 @@
+                 if documents and document_message(message):
+                     break
+             handled_id = int(message.id)
+-            records.append(
+-                map_message(
+-                    message,
+-                    source_id=request.source_id,
+-                    target=request.target,
+-                    channel_id=channel_id,
+-                    observed_at=request.observed_at,
+-                    media=media,
+-                    thumbnail=thumbnail,
+-                )
+-            )
++            record = map_message(
++                message, source_id=request.source_id, target=request.target,
++                channel_id=channel_id, observed_at=request.observed_at,
++                media=media, thumbnail=thumbnail,
++            )
++            if metadata_only and documents and document_message(message):
++                file = message.file
++                name = re.sub(r"[\\/\x00-\x1f]", "_", str(getattr(file, "name", None) or f"document-{message.id}"))[:240]
++                if name in {".", ".."}: name = f"document-{message.id}"
++                descriptor = {"id": f"tg-{message.id}-{message.document.id}", "name": name,
++                              "mimeType": str(file.mime_type or "application/octet-stream"),
++                              "bytes": int(file.size), "deferred": True}
++                record = replace(record, title=name, payload={**record.payload, "deferred_files": [descriptor]})
++            records.append(record)
+         if details:
+             records = [
+                 replace(
+--- a/src/xhs_local/plugins/sources/telegram/manifest.yaml
++++ b/src/xhs_local/plugins/sources/telegram/manifest.yaml
+@@ -31,6 +31,7 @@
+   properties:
+     max_items: {type: integer, minimum: 1}
+     collect_documents: {type: boolean}
++    document_metadata_only: {type: boolean}
+     lookback_hours: {type: number, minimum: 1}
+     max_documents: {type: integer, minimum: 1}
+     collect_timeout_seconds: {type: number, minimum: 1}

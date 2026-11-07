@@ -1,0 +1,32 @@
+[Unit]
+Description=Frontier Telegram X YouTube collectors
+After=network-online.target
+Conflicts=xhs-cloud.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/develop/Xhs
+Environment=TZ=Asia/Shanghai
+Environment=FRONTIER_ROOT=%h/develop/Xhs
+Environment=FRONTIER_MODEL=deepseek-flash
+Environment=FRONTIER_PROCESS_VIDEO=1
+Environment=FRONTIER_VIDEO_WORKERS=1
+Environment=OMP_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+Environment=OPENBLAS_NUM_THREADS=1
+Environment=HTML_PHOTO_BROWSER_PATH=%h/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell
+Environment=PATH=%h/develop/Xhs/runtime/tools/bin:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=TMPDIR=%h/develop/Xhs/runtime/tmp
+ExecStart=/bin/bash -c 'eval "$(%h/.local/bin/vpn env)"; exec %h/develop/Xhs/.venv/bin/python -m xhs_local.frontier.collector'
+Restart=on-failure
+RestartSec=20
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+CPUQuota=200%
+MemoryMax=16G
+StandardOutput=append:%h/develop/Xhs/runtime/frontier/collector.log
+StandardError=append:%h/develop/Xhs/runtime/frontier/collector.log
+
+[Install]
+WantedBy=default.target

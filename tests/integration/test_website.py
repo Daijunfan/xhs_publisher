@@ -137,27 +137,36 @@ def test_website_api_filters_paginates_serves_only_news_images_and_saves_favorit
     asyncio.run(run())
 
 
-def test_cleanup_removes_expired_favorites_and_assets_but_keeps_last_two_days(tmp_path):
+def test_cleanup_really_deletes_expired_content_and_files_but_keeps_favorites(tmp_path):
     now = datetime.now(UTC)
-    image = AttachmentInput("image/png", "old.png", b"expired-only")
+    old = now - timedelta(days=8)
+    private = AttachmentInput("image/png", "old.png", b"expired-only")
+    shared = AttachmentInput("image/png", "shared.png", b"shared-with-favorite")
     with open_database(tmp_path / "app.sqlite3", apply_migrations=True) as db:
         records = RecordsRepository(db, tmp_path)
-        records.upsert(record("expired", when=now - timedelta(days=3), images=(image,)))
-        records.upsert(record("saved", when=now - timedelta(days=3)))
-        records.upsert(record("recent", when=now - timedelta(hours=47)))
-        path = records.get("expired").attachments[0].absolute_path(tmp_path)
+        records.upsert(record("expired", when=old, images=(private, shared)))
+        records.upsert(record("saved", when=old, images=(shared,)))
+        records.upsert(record("recent", when=now - timedelta(days=6)))
+        paths = [a.absolute_path(tmp_path) for a in records.get("expired").attachments]
         records.set_news_favorite("saved", True)
-        from xhs_local.storage.video_artifacts import VideoArtifacts
-        videos = VideoArtifacts(tmp_path, "x", "expired").root
-        (videos / "state.json").write_text('{"record_id":"expired"}')
-        (videos / "audio.mp3").write_bytes(b"old audio")
-        protected = tmp_path / "secrets/key"
-        protected.parent.mkdir()
-        protected.write_text("secret fixture")
-        assert clean_expired_news(records, now) == {"records": 2, "media": 1}
-        assert records.get("expired") is None and records.get("saved") is None
-        assert records.get("recent") is not None
-        assert not path.exists() and not videos.exists() and protected.exists()
+    # Favorites must survive a service/database restart.
+    with open_database(tmp_path / "app.sqlite3") as db:
+        records = RecordsRepository(db, tmp_path)
+        assert records.news_feed(favorites=True)["total"] == 1
+        result = clean_expired_news(records, datetime.now(UTC))
+        assert result == {"records": 1, "media": 1}
+        assert records.get("expired") is None
+        assert records.get("saved") is not None and records.get("recent") is not None
+        assert not paths[0].exists() and paths[1].exists()
+        assert (
+            db.connection.execute(
+                "SELECT count(*) FROM record_versions WHERE record_id='expired'"
+            ).fetchone()[0]
+            == 0
+        )
+        records.set_news_favorite("saved", False)
+        assert clean_expired_news(records, datetime.now(UTC)) == {"records": 1, "media": 1}
+        assert not paths[1].exists()
         assert records.news_feed()["total"] == 1
         db.quick_check()
 
@@ -174,11 +183,7 @@ def test_website_mode_never_constructs_legacy_review_or_publishing(monkeypatch):
         raise AssertionError("website must not start the legacy pipeline")
 
     monkeypatch.setattr(website, "run_website", run)
-    snapshot = app.load_snapshot(Path(__file__).resolve().parents[2] / "config")
-    snapshot = replace(snapshot, app=snapshot.app.model_copy(update={
-        "website": snapshot.app.website.model_copy(update={"enabled": True})
-    }))
-    monkeypatch.setattr(app, "load_snapshot", lambda _: snapshot)
+    monkeypatch.setattr(app.LocalApplication, "create", forbidden)
     asyncio.run(app.run_application(Path(__file__).resolve().parents[2] / "config"))
     assert called == [True]
 
@@ -191,10 +196,7 @@ def test_website_preflight_does_not_require_models_or_remote_sink(tmp_path, monk
     snapshot = replace(
         snapshot,
         config_root=tmp_path,
-        app=snapshot.app.model_copy(update={
-            "database_path": "app.sqlite3",
-            "website": snapshot.app.website.model_copy(update={"enabled": True}),
-        }),
+        app=snapshot.app.model_copy(update={"database_path": "app.sqlite3"}),
         sources=snapshot.sources.model_copy(update={"sources": ()}),
     )
     open_database(snapshot.database_path, apply_migrations=True).close()
@@ -203,7 +205,8 @@ def test_website_preflight_does_not_require_models_or_remote_sink(tmp_path, monk
     def forbidden(*_args, **_kwargs):
         raise AssertionError("website preflight must not require LLMs or remote publishing")
 
-    monkeypatch.setattr("xhs_local.processing.provider.DeepSeekProvider", forbidden)
+    monkeypatch.setattr(cli, "FailoverProvider", forbidden)
+    monkeypatch.setattr(cli, "SinkPluginRegistry", forbidden)
     assert asyncio.run(cli.check()) == 0
 
 
@@ -295,7 +298,7 @@ def test_posters_reuse_original_renderer_pagination_and_cache(tmp_path, monkeypa
     asyncio.run(run())
 
 
-def test_cleanup_deletes_expired_posters_including_favorites(tmp_path):
+def test_weekly_cleanup_keeps_saved_posters_and_deletes_expired_posters(tmp_path):
     now = datetime.now(UTC)
     with open_database(tmp_path / "app.sqlite3", apply_migrations=True) as db:
         records = RecordsRepository(db, tmp_path)
@@ -308,4 +311,4 @@ def test_cleanup_deletes_expired_posters_including_favorites(tmp_path):
         records.set_news_favorite("saved", True)
         clean_expired_news(records, now)
         assert not posters.directory("expired").exists()
-        assert not posters.directory("saved").exists()
+        assert (posters.directory("saved") / "card.png").is_file()

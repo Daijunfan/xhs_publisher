@@ -98,7 +98,7 @@ def test_legacy_model_field_names_remain_rollback_compatible(tmp_path: Path) -> 
 
     restored = load_snapshot(root)
     assert restored.publishing.news.first_review_model == "deepseek-v4-pro"
-    assert restored.publishing.news.second_review_model == "deepseek-flash"
+    assert restored.publishing.news.second_review_model == "deepseek-v4-flash"
 
 
 
@@ -113,7 +113,7 @@ def test_capacity_schedule_cannot_exceed_xiaohongshu_image_limit(tmp_path: Path)
     assert snapshot.publishing.news.previous_day_keep_minutes == 20
     assert snapshot.publishing.news.night_publish_interval_minutes == 30
     assert snapshot.publishing.news.night_end_hour == 8
-    assert snapshot.publishing.news.codex_fallback_enabled is False
+    assert snapshot.publishing.news.codex_fallback_enabled is True
     assert snapshot.publishing.retry.transient_base_delay_seconds == 60
     assert snapshot.publishing.filters["tech_news"].minimum_text_characters == 1
     assert snapshot.publishing.news.source_publish_modes == {

@@ -190,6 +190,25 @@ def test_requests_refresh_proxy_settings_in_the_same_process(monkeypatch, client
     assert seen == ["http://127.0.0.1:1082", "http://127.0.0.1:7890"]
 
 
+def test_transport_failure_bubbles_through_both_retry_layers_without_sleep() -> None:
+    from xhs_local.processing import DeepSeekFilter, TechnologyNewsProcessor
+
+    calls = []
+
+    async def request(*_args):
+        calls.append("request")
+        raise DeepSeekTransportError("offline")
+
+    async def sleep(_seconds):
+        pytest.fail("outage delay belongs to the durable worker")
+
+    provider = DeepSeekProvider(api_key="test-key", attempts=3, request=request, sleep=sleep)
+    processor = TechnologyNewsProcessor(DeepSeekFilter(provider=provider), sleep=sleep)
+    with pytest.raises(DeepSeekTransportError):
+        asyncio.run(
+            processor.compose([{"record_id": "one", "text": "A technology update"}], max_items=1)
+        )
+    assert calls == ["request"]
 
 
 def test_codex_cli_provider_uses_isolated_json_prompt() -> None:

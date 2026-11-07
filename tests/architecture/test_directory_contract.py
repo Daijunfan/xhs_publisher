@@ -13,6 +13,7 @@ def _names(path: Path) -> set[str]:
 def test_top_level_package_matches_documented_module_boundaries() -> None:
     expected = {
         "configuration",
+        "frontier",
         "core",
         "observability",
         "pipeline",
@@ -41,6 +42,7 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
         "cli.py",
         "website.py",
         "configuration",
+        "frontier",
         "core",
         "observability",
         "pipeline",
@@ -50,6 +52,22 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
         "storage",
     }
     expected_modules = {
+        "frontier": {
+            "__init__.py",
+            "__main__.py",
+            "models.py",
+            "time_quality.py",
+            "store.py",
+            "worker.py",
+            "web.py",
+            "collector.py",
+            "preferences.py",
+            "subscriptions.py",
+            "media.py",
+            "migrations.py",
+            "radar.py",
+            "static",
+        },
         "core": {
             "__init__.py",
             "clock.py",
@@ -99,6 +117,7 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
         "processing": {
             "__init__.py",
             "compliance.py",
+            "image_review.py",
             "provider.py",
             "router.py",
             "technology_news.py",
@@ -135,16 +154,29 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
 def test_repository_has_no_legacy_runtime_or_literal_placeholder_directories() -> None:
     assert not (PROJECT_ROOT / "backend").exists()
     assert not (PROJECT_ROOT / "test").exists()
-    assert _names(PROJECT_ROOT / "tools") == {
-        "migrate_legacy_data.py", "import_video_sources.py", "export_agents_targets.py",
-        "restore_sensitive_data.py",
+    # Deployment helpers differ between the Mac and server; stray media is not a module.
+    tool_scripts = {p.name for p in (PROJECT_ROOT / "tools").glob("*.py")}
+    required_tools = {
+        "migrate_legacy_data.py",
+        "import_video_sources.py",
+        "export_agents_targets.py",
     }
-    assert _names(PROJECT_ROOT / "ops") == {
+    assert required_tools <= tool_scripts
+    assert tool_scripts <= required_tools | {"restore_sensitive_data.py"}
+    required_ops = {
         "com.xhs-local.power.plist",
         "com.xhs-local.pipeline.plist",
         "install_launchd.py",
-        "run_cloud.sh",
+        "frontier-web.service",
+        "frontier-collector.service",
+        "frontier_release.py",
+        "frontier_v2_checks.py",
+        "frontier_archive.py",
+    }
+    assert required_ops <= _names(PROJECT_ROOT / "ops")
+    assert _names(PROJECT_ROOT / "ops") <= required_ops | {
         "install_cloud_service.sh",
+        "run_cloud.sh",
         "xhs-publisher.service",
     }
     placeholders = [

@@ -40,6 +40,8 @@ def test_wheel_contains_runtime_templates_scripts_manifests_and_migrations(
     with zipfile.ZipFile(wheels[0]) as wheel:
         names = set(wheel.namelist())
         expected = {
+            "xhs_local/frontier/static/index.html",
+            "xhs_local/frontier/static/ASSET-LICENSES.txt",
             "xhs_local/rendering/templates/news_with_media.html",
             "xhs_local/rendering/templates/news_text_editorial.html",
             "xhs_local/rendering/templates/x_post.html",
@@ -55,13 +57,22 @@ def test_wheel_contains_runtime_templates_scripts_manifests_and_migrations(
             "xhs_local/storage/migrations/005_news_deleted.sql",
         }
         assert expected <= names
+        assert any(
+            n.startswith("xhs_local/frontier/static/assets/") and n.endswith(".js") for n in names
+        )
+        assert any(
+            n.startswith("xhs_local/frontier/static/assets/") and n.endswith(".css") for n in names
+        )
         assert not any(
             "/local_documents/" in name or "/baidu/" in name or name.endswith("resource_link.html")
             for name in names
         )
         assert not any(name.endswith((".pyc", ".pyo")) or "__pycache__" in name for name in names)
         entry_points = next(name for name in names if name.endswith(".dist-info/entry_points.txt"))
-        assert "xhs = xhs_local.cli:main" in wheel.read(entry_points).decode()
+        entries = wheel.read(entry_points).decode()
+        assert "xhs = xhs_local.cli:main" in entries
+        assert "frontier = xhs_local.frontier.web:main" in entries
+        assert "frontier-collector = xhs_local.frontier.collector:main" in entries
 
 
 def test_project_declares_one_python_runtime_and_lock() -> None:

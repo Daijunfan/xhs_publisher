@@ -33,7 +33,7 @@ class RetentionService:
     def purge_news(
         self, before: datetime, *, batch_size: int = 500, documents_before: datetime | None = None
     ) -> int:
-        """Delete expired local records, including favorites, to bound disk use."""
+        """Delete expired website records and versions, except saved favorites."""
         with self.database.transaction() as connection:
             rows = connection.execute(
                 """
@@ -43,6 +43,8 @@ class RetentionService:
                          AND occurred_at<?)
                         OR (json_extract(payload_json,'$.cloud_document_channel')=1
                             AND occurred_at<?))
+                   AND (json_extract(payload_json,'$.cloud_document_channel')=1
+                        OR record_id NOT IN (SELECT record_id FROM news_favorites))
                  ORDER BY occurred_at LIMIT ?
                 """,
                 (
@@ -119,14 +121,6 @@ class RetentionService:
                 "DELETE FROM work_items WHERE work_id=?", [(row["work_id"],) for row in rows]
             )
         return len(rows)
-
-    def purge_completed_remote_operations(self, before: datetime) -> None:
-        with self.database.transaction() as connection:
-            connection.execute(
-                "DELETE FROM remote_operations WHERE updated_at<? "
-                "AND state IN ('SUCCEEDED','REJECTED','NOT_SUBMITTED')",
-                (_timestamp(before),),
-            )
 
     def purge_unreferenced_records(self, before: datetime, *, batch_size: int = 500) -> int:
         with self.database.transaction() as connection:

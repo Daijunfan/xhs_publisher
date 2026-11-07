@@ -13,7 +13,7 @@ from xhs_local.core.identifiers import stable_record_id
 from xhs_local.core.states import WorkState, WorkTopic
 from xhs_local.pipeline.video import VideoPreparationService
 from xhs_local.processing.provider import DeepSeekResponseError
-from xhs_local.processing.video_summary import translation_chunks
+from xhs_local.processing.video_summary import VideoPolicyRejected, translation_chunks
 from xhs_local.storage.database import Database
 from xhs_local.storage.records import RecordsRepository
 from xhs_local.storage.schema import migrate
@@ -107,7 +107,9 @@ def setup_job(
     client=None,
     transcription=None,
     summarizer=None,
+    approved=True,
     channel_mode=False,
+    summary_only=False,
     commit_ready=None,
 ):
     db, records, works, root = environment
@@ -146,7 +148,9 @@ def setup_job(
         client_for=lambda _source: client,
         transcription=transcription,
         summarizer=summarizer,
+        image_review=None if channel_mode else lambda _paths: asyncio.sleep(0, result=approved),
         channel_mode=channel_mode,
+        summary_only=summary_only,
         commit_ready=commit_ready,
     )
     return service, work, record, batch, client, transcription, summarizer
@@ -175,6 +179,7 @@ def test_complete_pipeline_resumes_without_duplicate_download_transcription_or_w
         client_for=lambda _source: client,
         transcription=transcription,
         summarizer=summarizer,
+        image_review=lambda _paths: asyncio.sleep(0, result=True),
     )
     asyncio.run(restarted(work))
     ready = records.get(original.record_id)
@@ -211,7 +216,7 @@ def test_history_is_rejected_before_audio_or_transcription(environment):
     assert client.downloads == speech.submits == summary.calls == 0
 
 
-@pytest.mark.parametrize("phase", ["audio", "transcription", "summary"])
+@pytest.mark.parametrize("phase", ["image", "audio", "transcription", "summary", "policy"])
 def test_failed_or_incomplete_video_never_becomes_publishable(environment, phase):
     client = Client(datetime.now(UTC) - timedelta(minutes=2))
     if phase == "audio":
@@ -221,7 +226,9 @@ def test_failed_or_incomplete_video_never_becomes_publishable(environment, phase
     )
     summarizer = Summarizer(
         failure=(
-            ValidationFailure("incomplete")
+            VideoPolicyRejected("policy")
+            if phase == "policy"
+            else ValidationFailure("incomplete")
             if phase == "summary"
             else None
         )
@@ -231,8 +238,9 @@ def test_failed_or_incomplete_video_never_becomes_publishable(environment, phase
         client=client,
         transcription=transcription,
         summarizer=summarizer,
+        approved=phase != "image",
     )
-    with pytest.raises(ValidationFailure):
+    with pytest.raises((ValidationFailure, VideoPolicyRejected)):
         asyncio.run(service(work))
     assert environment[1].get(record.record_id).record.content_type == "video_pending"
     assert (
@@ -320,7 +328,7 @@ def test_channel_translation_resumes_chunks_preserves_timestamp_and_republishes(
     resumed = VideoPreparationService(
         records=records, work_items=works, runtime_root=root,
         client_for=lambda _source: client, transcription=speech, summarizer=translator,
-        channel_mode=True,
+        image_review=None, channel_mode=True,
     )
     asyncio.run(resumed(work))
     ready = records.get(original.record_id)
@@ -383,12 +391,18 @@ def test_channel_historical_record_does_not_bypass_guarded_commit(environment):
     assert VideoArtifacts(root, "youtube", "new").read("state.json")["stage"] == "discarded"
 
 
-def test_publisher_video_preparation_keeps_transcript_without_model_call(environment):
-    service, work, record, _, client, speech, summary = setup_job(environment)
-    service.summarizer = None
+def test_summary_only_channel_keeps_highlights_and_removes_original_input(environment):
+    translator = Translator()
+    service, work, record, *_ = setup_job(
+        environment, channel_mode=True, summary_only=True, summarizer=translator
+    )
     asyncio.run(service(work))
-    ready = environment[1].get(record.record_id)
-    assert ready.record.content_type == "tech_news"
-    assert ready.record.text == "完整的音频转写内容，包括方法和数字。"
-    assert summary.calls == 0
-    assert speech.submits == 1
+    ready = environment[1].get(record.record_id).record
+    cache = VideoArtifacts(environment[3], record.plugin_id, record.external_id)
+    assert ready.text == cache.read("summary.json")["text"]
+    assert int(ready.occurred_at.timestamp() * 1000) == int(record.occurred_at.timestamp() * 1000)
+    assert ready.payload["video_summary_only"] is True
+    assert translator.translations == []
+    assert cache.read("transcript-1.json") is None
+    assert not list(cache.root.glob("translation-*.json"))
+    assert cache.read("state.json")["stage"] == "ready"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
@@ -11,7 +12,7 @@ from xhs_local.core.contracts import AttachmentInput
 from xhs_local.core.errors import TransientError, ValidationFailure
 from xhs_local.processing.provider import DeepSeekResponseError
 from xhs_local.processing.transcription import TranscriptionTaskFailed
-from xhs_local.processing.video_summary import translation_chunks
+from xhs_local.processing.video_summary import VideoPolicyRejected, translation_chunks
 from xhs_local.storage.video_artifacts import VideoArtifacts
 
 
@@ -25,15 +26,18 @@ class VideoPreparationService:
         client_for,
         transcription,
         summarizer,
+        image_review,
         retry_attempts=3,
         channel_mode=False,
+        summary_only=False,
         commit_ready=None,
     ):
         self.records, self.work_items, self.runtime_root = records, work_items, runtime_root
         self.client_for, self.transcription = client_for, transcription
-        self.summarizer = summarizer
+        self.summarizer, self.image_review = summarizer, image_review
         self.retry_attempts = retry_attempts
         self.channel_mode = channel_mode
+        self.summary_only = summary_only
         self.commit_ready = commit_ready or records.upsert
 
     async def __call__(self, work) -> None:
@@ -97,6 +101,13 @@ class VideoPreparationService:
             state.update(media=media, stage="media_downloaded")
             cache.save("state.json", state)
         media_paths = tuple(cache.root / path for path in state["media"])
+        if self.image_review is not None and not state.get("images_approved"):
+            if not await self.image_review(media_paths):
+                state["stage"] = "rejected"
+                cache.save("state.json", state)
+                raise VideoPolicyRejected("video cover or avatar failed shared image review")
+            state["images_approved"] = True
+            cache.save("state.json", state)
         for index, part in enumerate(parts):
             if len(state["parts"]) <= index:
                 state["parts"].append({})
@@ -162,32 +173,30 @@ class VideoPreparationService:
             part_state["transcript"] = name
             cache.save("state.json", state)
         transcript = "\n\n".join(cache.read(part["transcript"])["text"] for part in state["parts"])
-        text = transcript
-        if self.summarizer is not None:
-            summary = cache.read("summary.json")
-            if summary is None:
-                state["stage"] = "summarizing"
+        summary = cache.read("summary.json")
+        if summary is None:
+            state["stage"] = "summarizing"
+            cache.save("state.json", state)
+            try:
+                summary = {"text": await self.summarizer.summarize(title, transcript)}
+            except DeepSeekResponseError as error:
+                state["summary_attempts"] = state.get("summary_attempts", 0) + 1
                 cache.save("state.json", state)
-                try:
-                    summary = {"text": await self.summarizer.summarize(title, transcript)}
-                except DeepSeekResponseError as error:
-                    state["summary_attempts"] = state.get("summary_attempts", 0) + 1
-                    cache.save("state.json", state)
-                    if state["summary_attempts"] >= self.retry_attempts:
-                        raise
-                    # Cloud polling is not a failed editorial attempt; keep a separate
-                    # budget so a long transcription cannot consume all summary retries.
-                    await asyncio.to_thread(
-                        self.work_items.schedule_retry,
-                        work.work_id,
-                        retry_at=datetime.now(UTC) + timedelta(seconds=60),
-                        error_class=error.error_class.value,
-                        error_summary=str(error),
-                    )
-                    return
-                cache.save("summary.json", summary)
-            text = summary["text"]
-        if self.channel_mode:
+                if state["summary_attempts"] >= self.retry_attempts:
+                    raise
+                # Cloud polling is not a failed editorial attempt; keep a separate
+                # budget so a long transcription cannot consume all summary retries.
+                await asyncio.to_thread(
+                    self.work_items.schedule_retry,
+                    work.work_id,
+                    retry_at=datetime.now(UTC) + timedelta(seconds=60),
+                    error_class=error.error_class.value,
+                    error_summary=str(error),
+                )
+                return
+            cache.save("summary.json", summary)
+        text = summary["text"]
+        if self.channel_mode and not self.summary_only:
             state["stage"] = "translating"
             cache.save("state.json", state)
             translations = []
@@ -198,11 +207,16 @@ class VideoPreparationService:
                     translated = {"text": await self.summarizer.translate_piece(title, chunk)}
                     cache.save(name, translated)
                 translations.append(translated["text"])
-            text = "## 视频总结\n\n" + text + "\n\n## 全文中文翻译\n\n" + "\n\n".join(translations)
+            text = (
+                "## 视频总结\n\n" + text
+                + "\n\n## 全文中文翻译\n\n" + "\n\n".join(translations)
+            )
         attachments = tuple(
             AttachmentInput("image/png", path.name, path.read_bytes()) for path in media_paths
         )
-        platform_name = {"youtube": "YouTube"}.get(record.plugin_id, record.plugin_id)
+        platform_name = {"youtube": "YouTube"}.get(
+            record.plugin_id, record.plugin_id
+        )
         author = parts[0].get("uploader") or record.source_name
         creator_id = parts[0].get("uploader_id") or record.payload["creator_id"]
         ready_record = replace(
@@ -211,20 +225,30 @@ class VideoPreparationService:
             occurred_at=published_at,
             title=title,
             text=text,
-            source_name=(
-                author if self.channel_mode else f"{author} · {creator_id} · {platform_name}"
-            ),
+            source_name=author if self.channel_mode else f"{author} · {creator_id} · {platform_name}",
             attachments=attachments,
             payload={
                 **record.payload,
                 "avatar_attachment_index": 0,
                 "video_verified": True,
+                **({"video_summary_only": True} if self.summary_only else {}),
                 "ready_at": utc_iso(),
                 "artifacts_path": str(cache.root.relative_to(self.runtime_root)),
             },
         )
         committed = await asyncio.to_thread(self.commit_ready, ready_record)
         state["stage"] = "discarded" if committed is False else "ready"
+        if self.summary_only:
+            # Originals are temporary summary input, not a second channel publication.
+            for index, part in enumerate(state["parts"]):
+                for field in ("audio", "transcript"):
+                    if name := part.pop(field, None):
+                        (cache.root / name).unlink(missing_ok=True)
+                directory = cache.root / f"part-{index + 1}"
+                if directory.exists():
+                    shutil.rmtree(directory)
+            for path in cache.root.glob("translation-*.json"):
+                path.unlink()
         cache.save("state.json", state)
 
     async def work_items_wait(self, work, message):

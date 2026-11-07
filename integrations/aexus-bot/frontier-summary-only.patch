@@ -1,0 +1,299 @@
+--- a/src/xhs_local/pipeline/video.py
++++ b/src/xhs_local/pipeline/video.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import asyncio
++import shutil
+ from dataclasses import replace
+ from datetime import UTC, datetime, timedelta
+ 
+@@ -28,6 +29,7 @@
+         image_review,
+         retry_attempts=3,
+         channel_mode=False,
++        summary_only=False,
+         commit_ready=None,
+     ):
+         self.records, self.work_items, self.runtime_root = records, work_items, runtime_root
+@@ -35,6 +37,7 @@
+         self.summarizer, self.image_review = summarizer, image_review
+         self.retry_attempts = retry_attempts
+         self.channel_mode = channel_mode
++        self.summary_only = summary_only
+         self.commit_ready = commit_ready or records.upsert
+ 
+     async def __call__(self, work) -> None:
+@@ -193,7 +196,7 @@
+                 return
+             cache.save("summary.json", summary)
+         text = summary["text"]
+-        if self.channel_mode:
++        if self.channel_mode and not self.summary_only:
+             state["stage"] = "translating"
+             cache.save("state.json", state)
+             translations = []
+@@ -228,12 +231,24 @@
+                 **record.payload,
+                 "avatar_attachment_index": 0,
+                 "video_verified": True,
++                **({"video_summary_only": True} if self.summary_only else {}),
+                 "ready_at": utc_iso(),
+                 "artifacts_path": str(cache.root.relative_to(self.runtime_root)),
+             },
+         )
+         committed = await asyncio.to_thread(self.commit_ready, ready_record)
+         state["stage"] = "discarded" if committed is False else "ready"
++        if self.summary_only:
++            # Originals are temporary summary input, not a second channel publication.
++            for index, part in enumerate(state["parts"]):
++                for field in ("audio", "transcript"):
++                    if name := part.pop(field, None):
++                        (cache.root / name).unlink(missing_ok=True)
++                directory = cache.root / f"part-{index + 1}"
++                if directory.exists():
++                    shutil.rmtree(directory)
++            for path in cache.root.glob("translation-*.json"):
++                path.unlink()
+         cache.save("state.json", state)
+ 
+     async def work_items_wait(self, work, message):
+--- a/src/xhs_local/website.py
++++ b/src/xhs_local/website.py
+@@ -165,11 +165,16 @@
+         self.service = VideoPreparationService(
+             records=records, work_items=self.works, runtime_root=snapshot.runtime_root,
+             client_for=lambda source_id: getattr(scheduler.plugins.get(source_id), "client", None),
+-            transcription=LocalWhisperClient(snapshot.runtime_root / "models" / "whisper-turbo"),
++            transcription=LocalWhisperClient(
++                snapshot.runtime_root / "models" / "whisper-turbo",
++                device=os.environ.get("YOUTUBE_WHISPER_DEVICE", "cuda"),
++                compute_type=os.environ.get("YOUTUBE_WHISPER_COMPUTE_TYPE", "float16"),
++            ),
+             summarizer=VideoSummarizer(
+                 provider, None, model=os.environ.get("DEEPSEEK_VIDEO_MODEL", "deepseek-flash")
+             ),
+             image_review=None, channel_mode=True, commit_ready=self._commit_ready,
++            summary_only=os.environ.get("DEEPSEEK_VIDEO_SUMMARY_ONLY") == "1",
+         )
+         self.workers = [PublisherWorker(
+             queue, self.works, DeadLetterRepository(records.database),
+--- a/src/xhs_local/processing/transcription.py
++++ b/src/xhs_local/processing/transcription.py
+@@ -137,8 +137,9 @@
+ class LocalWhisperClient:
+     local = True
+ 
+-    def __init__(self, model_dir: Path) -> None:
++    def __init__(self, model_dir: Path, *, device="cuda", compute_type="float16") -> None:
+         self.model_dir = model_dir
++        self.device, self.compute_type = device, compute_type
+         self.model: WhisperModel | None = None
+         self.lock = asyncio.Lock()
+ 
+@@ -164,7 +165,8 @@
+ 
+     def _transcribe(self, audio: Path, expected_duration: float) -> dict:
+         if self.model is None:
+-            self.model = WhisperModel(str(self.model_dir), device="cuda", compute_type="float16")
++            self.model = WhisperModel(str(self.model_dir), device=self.device, compute_type=self.compute_type,
++                                      cpu_threads=8 if self.device == "cpu" else 0)
+         segments, info = self.model.transcribe(str(audio), beam_size=5, vad_filter=False)
+         text = "\n\n".join(segment.text.strip() for segment in segments if segment.text.strip())
+         duration = float(info.duration)
+--- a/src/xhs_local/pipeline/agents.py
++++ b/src/xhs_local/pipeline/agents.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import asyncio
++import os
+ import base64
+ import hashlib
+ import logging
+@@ -244,6 +245,10 @@
+             args["url"] = record.source_url
+         if avatar_id:
+             args["avatarMediaId"] = avatar_id
++        if record.plugin_id == "youtube" and os.environ.get("DEEPSEEK_VIDEO_SUMMARY_ONLY") == "1":
++            marker = "\n\n## 全文中文翻译\n\n"
++            args["body"] = record.text.split(marker, 1)[0].removeprefix("## 视频总结\n\n")
++            args.pop("contentHash", None)  # Core computes the projected article hash.
+         result = await self._call("channel.publish", args)
+         status = result.get("status")
+         if status not in {"created", "updated", "duplicate", "deleted", "expired"}:
+--- a/src/xhs_local/plugins/sources/youtube/client.py
++++ b/src/xhs_local/plugins/sources/youtube/client.py
+@@ -14,12 +14,17 @@
+ from ..video.client import VideoClient, channel_avatar, run_command
+ 
+ 
+-def recent_uploads(info: dict, cutoff: float, resolve=None):
++def recent_uploads(info: dict, cutoff: float, resolve=None, seen_video_ids=()):
++    seen_video_ids = set(seen_video_ids)
+     for entry in info.get("entries") or ():
+         if not isinstance(entry, dict):
+             continue
+         if "entries" in entry:
+-            yield from recent_uploads(entry, cutoff, resolve)
++            yield from recent_uploads(entry, cutoff, resolve, seen_video_ids)
++            continue
++        if entry.get("timestamp") and entry["timestamp"] < cutoff:
++            break
++        if entry.get("id") in seen_video_ids:
+             continue
+         if not entry.get("timestamp") and resolve is not None and entry.get("id"):
+             try:
+@@ -112,7 +117,7 @@
+             metadata = {**metadata, "avatar_url": channel_avatar(about)}
+         return await super().images(record, metadata, directory)
+ 
+-    async def discover(self, homepage: str, activated_at: datetime) -> dict:
++    async def discover(self, homepage: str, activated_at: datetime, seen_video_ids=()) -> dict:
+         arguments = [
+             sys.executable,
+             "-m",
+@@ -121,12 +126,12 @@
+             str((activated_at - timedelta(days=7)).timestamp()),
+         ]
+         async with self.request_slot(), self.cookies() as cookie_file:
+-            arguments.extend([cookie_file or "-", str(self.node_path or "-")])
++            arguments.extend([cookie_file or "-", str(self.node_path or "-"), json.dumps(sorted(seen_video_ids))])
+             return json.loads(await run_command(arguments))
+ 
+ 
+ def discover_uploads(
+-    homepage: str, cutoff: float, cookie_file: str | None = None, node_path=None
++    homepage: str, cutoff: float, cookie_file: str | None = None, node_path=None, seen_video_ids=()
+ ) -> dict:
+     options = {
+         "quiet": True,
+@@ -148,9 +153,9 @@
+             "channel_id": info.get("channel_id"),
+             "uploader": info.get("uploader"),
+             "thumbnails": info.get("thumbnails", []),
+-            "entries": list(
+-                recent_uploads(info, cutoff, lambda url: ydl.extract_info(url, download=False))
+-            ),
++            # VideoSourcePlugin skips seen IDs before requesting full metadata.
++            "entries": list(recent_uploads(info, cutoff,
++                lambda url: ydl.extract_info(url, download=False), seen_video_ids)),
+         }
+ 
+ 
+@@ -162,6 +167,7 @@
+                 float(sys.argv[2]),
+                 sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] != "-" else None,
+                 sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None,
++                json.loads(sys.argv[5]) if len(sys.argv) > 5 else (),
+             )
+         )
+     )
+--- a/src/xhs_local/plugins/sources/video/plugin.py
++++ b/src/xhs_local/plugins/sources/video/plugin.py
+@@ -69,11 +69,11 @@
+         activated_at = datetime.fromisoformat(activation).astimezone(UTC)
+         cursor = datetime.fromisoformat(request.checkpoint.get("last_polled_at", activation))
+         scan_from = max(activated_at, cursor - timedelta(days=1))
+-        info = await self.client.discover(request.target.locator, scan_from)
++        seen = set(request.checkpoint.get("seen_video_ids", []))
++        info = await self.client.discover(request.target.locator, scan_from, seen)
+         avatar = channel_avatar(info)
+         records = []
+         errors = 0
+-        seen = set(request.checkpoint.get("seen_video_ids", []))
+         pending = []
+         attempted = set()
+         entries = [*request.checkpoint.get("pending_metadata", []), *video_entries(info)]
+--- a/tests/e2e/test_video_pipeline.py
++++ b/tests/e2e/test_video_pipeline.py
+@@ -109,6 +109,7 @@
+     summarizer=None,
+     approved=True,
+     channel_mode=False,
++    summary_only=False,
+     commit_ready=None,
+ ):
+     db, records, works, root = environment
+@@ -149,6 +150,7 @@
+         summarizer=summarizer,
+         image_review=None if channel_mode else lambda _paths: asyncio.sleep(0, result=approved),
+         channel_mode=channel_mode,
++        summary_only=summary_only,
+         commit_ready=commit_ready,
+     )
+     return service, work, record, batch, client, transcription, summarizer
+@@ -387,3 +389,20 @@
+     assert records.get(original.record_id).record.occurred_at == stored_old.record.occurred_at
+     assert calls == [] and client.downloads == speech.submits == summary.calls == 0
+     assert VideoArtifacts(root, "youtube", "new").read("state.json")["stage"] == "discarded"
++
++
++def test_summary_only_channel_keeps_highlights_and_removes_original_input(environment):
++    translator = Translator()
++    service, work, record, *_ = setup_job(
++        environment, channel_mode=True, summary_only=True, summarizer=translator
++    )
++    asyncio.run(service(work))
++    ready = environment[1].get(record.record_id).record
++    cache = VideoArtifacts(environment[3], record.plugin_id, record.external_id)
++    assert ready.text == cache.read("summary.json")["text"]
++    assert int(ready.occurred_at.timestamp() * 1000) == int(record.occurred_at.timestamp() * 1000)
++    assert ready.payload["video_summary_only"] is True
++    assert translator.translations == []
++    assert cache.read("transcript-1.json") is None
++    assert not list(cache.root.glob("translation-*.json"))
++    assert cache.read("state.json")["stage"] == "ready"
+--- a/tests/unit/plugins/sources/test_youtube_session.py
++++ b/tests/unit/plugins/sources/test_youtube_session.py
+@@ -100,7 +100,7 @@
+         calls.append(arguments)
+         cookie_path = (
+             arguments[arguments.index("--cookies") + 1]
+-            if "--cookies" in arguments else arguments[-2]
++            if "--cookies" in arguments else arguments[5]
+         )
+         copy = Path(cookie_path)
+         copies.append(copy)
+@@ -210,3 +210,21 @@
+     with pytest.raises(RuntimeError, match="rate-limited"):
+         list(recent_uploads({"entries": [{"id": "one"}, {"id": "two"}]}, 0, limited))
+     assert len(calls) == 1
++
++
++def test_discovery_defers_video_metadata_until_seen_ids_are_filtered(monkeypatch):
++    from xhs_local.plugins.sources import youtube
++    from xhs_local.plugins.sources.youtube import client
++    calls = []
++    class Feed:
++        def __init__(self, options): pass
++        def __enter__(self): return self
++        def __exit__(self, *_): pass
++        def extract_info(self, url, **kwargs):
++            calls.append(url)
++            assert url == "https://youtube.com/@fixture"
++            return {"entries": [{"id": "old-video"}, {"id": "new-video", "title": "New video", "timestamp": 42}]}
++    monkeypatch.setattr(client, "YoutubeDL", Feed)
++    result = client.discover_uploads("https://youtube.com/@fixture", 0, seen_video_ids={"old-video"})
++    assert result["entries"][0]["id"] == "new-video"
++    assert calls == ["https://youtube.com/@fixture"]
+--- a/tests/unit/plugins/sources/test_video.py
++++ b/tests/unit/plugins/sources/test_video.py
+@@ -107,7 +107,7 @@
+         fail = True
+         scans = []
+ 
+-        async def discover(self, homepage, since):
++        async def discover(self, homepage, since, seen_video_ids=()):
+             self.scans.append(since)
+             return (
+                 {
+@@ -188,7 +188,7 @@
+         async def metadata(self, url):
+             return {"timestamp": now.timestamp(), "title": "New video"}
+ 
+-        async def discover(self, homepage, activated_at):
++        async def discover(self, homepage, activated_at, seen_video_ids=()):
+             assert homepage == url
+             return {
+                 "entries": [

@@ -11,6 +11,3 @@ This is the sole Xiaohongshu publication implementation. It packages the proven
 The backend never calls the page-private `_onPublish()` method. A result is successful
 only after the creator page reports success and the note manager confirms the title or
 post-count increase.
-
-`http.py` exposes the authenticated manual publishing API used by the operating AI Agent.
-It accepts approved drafts across source platforms and reuses the browser contract.

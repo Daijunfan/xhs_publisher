@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
+import ssl
 import time
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
@@ -23,6 +25,30 @@ PublishCallback = Callable[[], Awaitable[None]]
 WALL_CLOCK_RECHECK_SECONDS = 30.0
 SOURCE_CLOCK_RECHECK_SECONDS = 300.0
 COLLECTION_TIMEOUT_SECONDS = 180.0
+
+
+def source_error_code(error: BaseException) -> str:
+    """Classify locally; never publish exception text, URLs or command arguments."""
+    code = getattr(error, "code", None)
+    category = getattr(error, "error_class", None)
+    message = str(error).lower()
+    # Remove URLs before matching HTTP/message markers (query secrets are not evidence).
+    message = re.sub(r"https?://\S+", "", message)
+    if code == "YOUTUBE_RATE_LIMITED" or category == "RATE_LIMITED" or re.search(r"\bhttp(?: error)?[ :]+429\b", message):
+        return "rate-limit"
+    if category == "AUTH_REQUIRED":
+        return "login"
+    if isinstance(error, TimeoutError) or "timed out" in message or "deadline passed" in message:
+        return "timeout"
+    if isinstance(error, ssl.SSLError) or "certificate_verify_failed" in message:
+        return "TLS"
+    if re.search(r"\bhttp(?: error)?[ :]+404\b", message):
+        return "404"
+    if re.search(r"\bhttp(?: error)?[ :]+(?:401|403)\b", message) or "login required" in message:
+        return "login"
+    if "command failed (exit " in message:
+        return "command-exit"
+    return "unknown"
 
 
 def _failure_delay(interval: float, failures: int) -> float:
@@ -224,20 +250,27 @@ class SourceScheduler:
                     {
                         "last_success_at": self._status_now().isoformat(),
                         "last_new_items": count,
+                        "last_success_partial": bool(batch.errors),
+                        "consecutive_failures": 0,
+                        "error_class": "partial" if batch.errors else None,
                         "failures": 1 if batch.errors else 0,
                         "last_error": f"{batch.errors} items failed; see structured log"
                         if batch.errors
                         else None,
                     }
                 )
+                if batch.errors:
+                    self.status[target.id]["last_failure_at"] = self._status_now().isoformat()
             except asyncio.CancelledError:
                 raise
-            except Exception:
+            except Exception as error:
                 failures += 1
                 self.status[target.id].update(
                     {
                         "last_failure_at": self._status_now().isoformat(),
                         "failures": failures,
+                        "consecutive_failures": failures,
+                        "error_class": source_error_code(error),
                         "last_error": "collection failed; see structured log",
                     }
                 )

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhs-local"
-version = "2.0.0"
-description = "Local multi-source content pipeline for Xiaohongshu"
+version = "3.0.0"
+description = "Frontier global intelligence and multi-source news collection"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.11,<3",
@@ -29,6 +29,8 @@ dev = [
 
 [project.scripts]
 xhs = "xhs_local.cli:main"
+frontier = "xhs_local.frontier.web:main"
+frontier-collector = "xhs_local.frontier.collector:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -43,6 +45,8 @@ xhs_local = [
   "rendering/templates/*.html",
   "storage/migrations/*.sql",
   "plugins/**/*.md",
+  "frontier/static/*",
+  "frontier/static/assets/*",
 ]
 
 [tool.pytest.ini_options]

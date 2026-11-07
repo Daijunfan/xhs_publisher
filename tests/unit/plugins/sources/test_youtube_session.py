@@ -100,7 +100,7 @@ def test_rate_limit_cools_all_shared_client_requests_without_rewriting_cookies(
         calls.append(arguments)
         cookie_path = (
             arguments[arguments.index("--cookies") + 1]
-            if "--cookies" in arguments else arguments[-2]
+            if "--cookies" in arguments else arguments[5]
         )
         copy = Path(cookie_path)
         copies.append(copy)
@@ -210,3 +210,21 @@ def test_discovery_stops_resolving_peer_metadata_after_explicit_rate_limit():
     with pytest.raises(RuntimeError, match="rate-limited"):
         list(recent_uploads({"entries": [{"id": "one"}, {"id": "two"}]}, 0, limited))
     assert len(calls) == 1
+
+
+def test_discovery_defers_video_metadata_until_seen_ids_are_filtered(monkeypatch):
+    from xhs_local.plugins.sources import youtube
+    from xhs_local.plugins.sources.youtube import client
+    calls = []
+    class Feed:
+        def __init__(self, options): pass
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def extract_info(self, url, **kwargs):
+            calls.append(url)
+            assert url == "https://youtube.com/@fixture"
+            return {"entries": [{"id": "old-video"}, {"id": "new-video", "title": "New video", "timestamp": 42}]}
+    monkeypatch.setattr(client, "YoutubeDL", Feed)
+    result = client.discover_uploads("https://youtube.com/@fixture", 0, seen_video_ids={"old-video"})
+    assert result["entries"][0]["id"] == "new-video"
+    assert calls == ["https://youtube.com/@fixture"]

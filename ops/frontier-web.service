@@ -1,0 +1,27 @@
+[Unit]
+Description=Frontier global intelligence web and event enrichment
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/develop/Xhs
+Environment=TZ=Asia/Shanghai
+Environment=FRONTIER_ROOT=%h/develop/Xhs
+Environment=FRONTIER_HOST=127.0.0.1
+Environment=FRONTIER_PORT=8088
+Environment=FRONTIER_MODEL=deepseek-flash
+Environment=FRONTIER_DAILY_LIMIT=2000
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/bin/bash -c 'eval "$(%h/.local/bin/vpn env)"; exec %h/develop/Xhs/.venv/bin/python -m xhs_local.frontier'
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=35
+UMask=0077
+NoNewPrivileges=true
+CPUQuota=150%
+MemoryMax=1G
+StandardOutput=append:%h/develop/Xhs/runtime/frontier/web.log
+StandardError=append:%h/develop/Xhs/runtime/frontier/web.log
+
+[Install]
+WantedBy=default.target

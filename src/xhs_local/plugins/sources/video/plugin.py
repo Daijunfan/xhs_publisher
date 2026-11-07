@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 
+from xhs_local.core.errors import AuthenticationRequired
 from xhs_local.core.contracts import CollectBatch, SourceRecord
 from xhs_local.core.identifiers import stable_record_id
 from xhs_local.core.states import WorkTopic
@@ -69,16 +71,29 @@ class VideoSourcePlugin:
         activated_at = datetime.fromisoformat(activation).astimezone(UTC)
         cursor = datetime.fromisoformat(request.checkpoint.get("last_polled_at", activation))
         scan_from = max(activated_at, cursor - timedelta(days=1))
-        info = await self.client.discover(request.target.locator, scan_from)
+        seen = set(request.checkpoint.get("seen_video_ids", []))
+        # A pending broadcast's cached status/metadata must be refreshed after it ends.
+        pending_entries = [dict(item) for item in request.checkpoint.get("pending_metadata", [])]
+        for entry in pending_entries:
+            if any(status in {"is_live", "is_upcoming", "post_live"} for status in (
+                    entry.get("live_status"), (entry.get("video_metadata") or {}).get("live_status"))):
+                entry.pop("live_status", None)
+                entry.pop("video_metadata", None)
+        pending_ids = {str(item["id"]) for item in pending_entries}
+        info = await self.client.discover(request.target.locator, scan_from, seen | pending_ids)
         avatar = channel_avatar(info)
         records = []
         errors = 0
-        seen = set(request.checkpoint.get("seen_video_ids", []))
         pending = []
         attempted = set()
-        entries = [*request.checkpoint.get("pending_metadata", []), *video_entries(info)]
-        for entry in entries:
-            request.ensure_active()
+        entries = [*video_entries(info), *pending_entries]
+        for index, entry in enumerate(entries):
+            request.cancellation.raise_if_cancelled()
+            remaining = request.remaining_seconds()
+            if remaining is not None and remaining < 15:
+                pending.extend(entries[index:])
+                errors += 1
+                break
             video_id = str(entry["id"])
             if video_id in seen or video_id in attempted:
                 continue
@@ -95,7 +110,8 @@ class VideoSourcePlugin:
                 if not metadata or not isinstance(
                     metadata.get("release_timestamp") or metadata.get("timestamp"), (int, float)
                 ):
-                    metadata = await self.client.metadata(url)
+                    async with asyncio.timeout(remaining - 10 if remaining is not None else None):
+                        metadata = await self.client.metadata(url)
                 published = metadata.get("release_timestamp") or metadata.get("timestamp")
                 if not isinstance(published, (int, float)):
                     raise ValueError("missing publication timestamp")
@@ -131,6 +147,13 @@ class VideoSourcePlugin:
                         "error_class": type(error).__name__,
                     },
                 )
+                left = request.remaining_seconds()
+                if isinstance(error, AuthenticationRequired) or left is not None and left < 15:
+                    # Keep progress and retry peers before the failed item next time.
+                    pending.pop()
+                    pending.extend(entries[index + 1:])
+                    pending.append(entry)
+                    break
                 continue
             records.append(
                 SourceRecord(

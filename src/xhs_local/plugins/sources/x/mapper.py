@@ -37,6 +37,7 @@ def map_post(
     observed_at: datetime,
     avatar: DownloadedXImage | None = None,
     images: tuple[DownloadedXImage, ...] = (),
+    downloaded_image_urls: tuple[str, ...] = (),
 ) -> SourceRecord:
     downloaded = (*((avatar,) if avatar is not None else ()), *images)
     attachments = tuple(
@@ -64,6 +65,8 @@ def map_post(
             "post_id": post.post_id,
             "author_name": post.author_name,
             "author_handle": handle,
+            "image_urls": list(post.image_urls),
+            "downloaded_image_urls": list(downloaded_image_urls or post.image_urls[:len(images)]),
             **({"avatar_attachment_index": 0} if avatar is not None else {}),
         },
         attachments=attachments,

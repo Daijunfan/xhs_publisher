@@ -1,26 +1,23 @@
 # xhs_publisher
 
-Telegram、X、YouTube 采集器与小红书发布接口。采集结果直接存入本地 SQLite/网页，视频用 GPU Whisper 转写；原文、收藏、图片、视频音频和转写最多保留最近 48 小时，每 5 分钟清理。
+独立的 Telegram、X、YouTube 社交媒体采集服务。采集进程、原始媒体与内容索引运行在 Linux；[Aexus Bot](https://github.com/Daijunfan/Aexus-Bot) 是独立客户端，通过受控 API 管理订阅、读取、搜索和按需下载。
 
-**AI Agent 全程托管运营**：Agent 自行审核、撰写、按相关主题汇总跨平台信息，再明确调用小红书发布接口。程序不调用 DeepSeek，不自动审核、撰写或发帖。小红书仍使用已验证的 Chromium/Safari 浏览器发布接口，并在作品列表确认结果。
+## Aexus Bot 集成
 
-- [云主机部署.md](云主机部署.md)：拉取仓库、恢复 Sensitive data、安装和启动。
-- [AI_AGENT_GUIDE.md](AI_AGENT_GUIDE.md)：运营流程与完整保留的原提示词。
-- [发布接口.md](发布接口.md)：Agent 的选稿、提交、去重和结果查询。
+采集器入口、订阅同步、原生作者头像、内容检索、按平台容量管理和外刊按需下载位于 [integrations/aexus-bot](integrations/aexus-bot/README.md)。完整采集后端位于 `src/xhs_local/`。
 
-`config/sources.yaml` 保留 Telegram 14、X 300、YouTube 172 个目标，480 个启用。敏感信息单独在 Mac 根目录 `Sensitive data/`，不随 GitHub 分发；网页默认监听 `127.0.0.1:8080`，发布 API 需要运营 token。
+- Telegram / X / YouTube 的采集、游标和重试在服务端执行。
+- Aexus 模式只生成 YouTube 中文总结，不生成完整翻译；使用独立的 DeepSeek key 文件。
+- 各平台容量分别管理，已收藏内容与用户请求下载的文件保留；外刊收到下载请求后才获取。
+- 客户端不需要常驻保存未收藏的新闻或图片。
+- API token、平台登录状态、DeepSeek key、SSH 配置和运行数据不提交仓库。
 
-```bash
+集成模式不会自动发帖，也不会创建 Coding Agent。原有独立阅读与小红书发布能力保留，由用户显式启用。
+
+## 开发
+
+```sh
 uv sync --frozen --extra dev --python 3.12
-.venv/bin/python tools/restore_sensitive_data.py
-ops/run_cloud.sh migrate
-ops/install_cloud_service.sh
-ops/run_cloud.sh status
 ```
 
-```bash
-.venv/bin/pytest -q
-.venv/bin/ruff check src tests tools
-```
-
-默认测试不向小红书发送内容。更新代码保留 `runtime/` 中的凭据、模型与运行状态。
+部署与令牌配置见 [采集集成文档](integrations/aexus-bot/README.md)。请使用自己的配置和私有密钥文件，不要提交 `runtime/`、平台会话或凭据。

@@ -44,7 +44,6 @@ def test_registry_discovers_sources_and_preserves_configured_targets() -> None:
         "computer_science_and_programming",
         "linuxgram",
         "machine_learning_courses",
-        "trunkietrunk",
     ]
     plugin = registry.create(prepared, client_factory=lambda *_args: object())
     assert isinstance(plugin, SourcePlugin)

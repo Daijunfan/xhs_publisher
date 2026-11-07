@@ -67,7 +67,6 @@ def test_concrete_platform_adapters_are_wired_only_at_composition_boundaries() -
     allowed = {
         "src/xhs_local/app.py",
         "src/xhs_local/cli.py",
-        "src/xhs_local/website.py",
         "src/xhs_local/plugins/registry.py",
     }
     violations = []

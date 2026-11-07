@@ -22,8 +22,11 @@ from xhs_local.configuration.history import ConfigHistory
 from xhs_local.configuration.loader import load_snapshot
 from xhs_local.core.states import WorkState
 from xhs_local.observability.status import read_status
-from xhs_local.plugins.registry import SourcePluginRegistry
+from xhs_local.plugins.registry import SinkPluginRegistry, SourcePluginRegistry
+from xhs_local.plugins.sinks.xiaohongshu.browser import SafariPublisher, SafariSession
 from xhs_local.plugins.sources.telegram.client import authorize_telegram_session
+from xhs_local.processing.provider import CodexCliProvider, DeepSeekProvider, FailoverProvider
+from xhs_local.rendering.renderer import HtmlPhotoGenerator
 from xhs_local.storage.backups import BackupService
 from xhs_local.storage.database import Database
 from xhs_local.storage.dead_letters import DeadLetterRepository
@@ -179,7 +182,7 @@ def _format_status_summary(snapshot: Any, state: dict[str, Any]) -> str:
         return (
             f"本地新闻网站：{'运行中' if state.get('ready') else '已停止'} · 端口 {port}\n"
             f"采集目标：{len(targets)} · 本次启动已成功 {healthy} · 当前有错误 {failed}\n"
-            "发布方式：本地展示；AI Agent 审核、撰写并调用小红书发布 API"
+            "发布方式：入库即展示，按来源分类；审核、评级、定时发布已停用"
         )
     targets = list((state.get("source_targets") or {}).values())
     healthy = sum(
@@ -442,7 +445,43 @@ async def check() -> int:
             runtime_root=snapshot.runtime_root,
         )
         await registry.preflight(prepared, healthcheck=True)
-    print("preflight passed: SQLite and sources; AI Agent owns review, writing and publish API")
+    if snapshot.app.website.enabled:
+        print("preflight passed: SQLite and sources; website mode bypasses remote publishing")
+        return 0
+    news = snapshot.publishing.news
+    await FailoverProvider(
+        DeepSeekProvider(api_key_path=snapshot.resolve(news.deepseek_key_path)),
+        CodexCliProvider(
+            executable=news.codex_fallback_executable,
+            model=news.codex_fallback_model,
+            timeout_seconds=news.codex_fallback_timeout_seconds,
+        )
+        if news.codex_fallback_enabled
+        else None,
+    ).check_configuration()
+    await HtmlPhotoGenerator(
+        output_dir=snapshot.runtime_root / "generated",
+        runtime_root=snapshot.runtime_root,
+    ).check_configuration()
+    sinks = SinkPluginRegistry()
+    await sinks.preflight(
+        sinks.prepare("xiaohongshu"),
+        live=True,
+        dependencies={
+            "publisher": SafariPublisher(
+                max_images=snapshot.publishing.news.max_news_per_note,
+                background=True,
+                session=SafariSession(
+                    background=True,
+                    persistent=True,
+                    state_path=(
+                        snapshot.runtime_root / "sessions" / "safari-publisher-window.json"
+                    ),
+                ),
+            )
+        },
+    )
+    print("preflight passed: SQLite, sources, DeepSeek, renderer, Safari")
     return 0
 
 

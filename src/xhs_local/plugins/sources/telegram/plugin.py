@@ -73,6 +73,7 @@ class TelegramSourcePlugin:
         unknown = set(target.options) - {
             "max_items",
             "collect_documents",
+            "document_metadata_only",
             "lookback_hours",
             "max_documents",
             "collect_timeout_seconds",
@@ -137,6 +138,7 @@ class TelegramSourcePlugin:
             raise PluginContractError("CollectRequest observed_at must include timezone")
         observed_at = observed_at.astimezone(UTC)
         documents = bool(request.target.options.get("collect_documents", False))
+        metadata_only = bool(request.target.options.get("document_metadata_only", False))
         cutoff = observed_at - timedelta(
             hours=float(request.target.options.get("lookback_hours", self.lookback_hours))
         )
@@ -170,7 +172,9 @@ class TelegramSourcePlugin:
             media = None
             thumbnail = None
             try:
-                if documents and document_message(message):
+                if documents and document_message(message) and metadata_only:
+                    document_count += 1
+                elif documents and document_message(message):
                     if document_count >= int(request.target.options.get("max_documents", 1)):
                         break
                     media = await self.transport.download_document(
@@ -219,17 +223,20 @@ class TelegramSourcePlugin:
                 if documents and document_message(message):
                     break
             handled_id = int(message.id)
-            records.append(
-                map_message(
-                    message,
-                    source_id=request.source_id,
-                    target=request.target,
-                    channel_id=channel_id,
-                    observed_at=request.observed_at,
-                    media=media,
-                    thumbnail=thumbnail,
-                )
+            record = map_message(
+                message, source_id=request.source_id, target=request.target,
+                channel_id=channel_id, observed_at=request.observed_at,
+                media=media, thumbnail=thumbnail,
             )
+            if metadata_only and documents and document_message(message):
+                file = message.file
+                name = re.sub(r"[\\/\x00-\x1f]", "_", str(getattr(file, "name", None) or f"document-{message.id}"))[:240]
+                if name in {".", ".."}: name = f"document-{message.id}"
+                descriptor = {"id": f"tg-{message.id}-{message.document.id}", "name": name,
+                              "mimeType": str(file.mime_type or "application/octet-stream"),
+                              "bytes": int(file.size), "deferred": True}
+                record = replace(record, title=name, payload={**record.payload, "deferred_files": [descriptor]})
+            records.append(record)
         if details:
             records = [
                 replace(

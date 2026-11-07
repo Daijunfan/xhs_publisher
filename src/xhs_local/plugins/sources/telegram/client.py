@@ -23,6 +23,8 @@ from xhs_local.plugins.contracts import CancellationToken, PluginTarget
 
 from .mapper import DownloadedMedia, image_mime_type, safe_media_name
 
+DEFAULT_API_ID = 2040
+DEFAULT_API_HASH = "b18441a1ff607e10a989891a5462e627"
 AUTO_RECONNECT_ATTEMPTS = 3
 DISCONNECT_TIMEOUT_SECONDS = 30.0
 TRANSPORT_ERRORS = (
@@ -135,18 +137,15 @@ def activate_session(replacement: Path, current: Path, stamp: str) -> Path | Non
 async def authorize_telegram_session(
     session_path: str | Path,
     *,
-    api_id: int | None = None,
-    api_hash: str | None = None,
+    api_id: int = DEFAULT_API_ID,
+    api_hash: str = DEFAULT_API_HASH,
     client_factory: ClientFactory = TelegramClient,
     output: Callable[[str], None] = print,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> Path | None:
     """Interactively replace a Session; suitable for a thin CLI command."""
 
-    normalized_id, normalized_hash = validate_api_credentials(
-        api_id if api_id is not None else os.environ.get("USER_API_ID", ""),
-        api_hash if api_hash is not None else os.environ.get("USER_API_HASH", ""),
-    )
+    normalized_id, normalized_hash = validate_api_credentials(api_id, api_hash)
     root = telethon_session_root(session_path)
     root.parent.mkdir(parents=True, exist_ok=True)
     stamp = now().astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -318,6 +317,17 @@ class TelegramTransport:
                 await self._discard_client(client)
             raise
         return channel_id, messages
+
+    async def fetch_document(self, target, message_id: int, *, deadline, cancellation):
+        cancellation.raise_if_cancelled()
+        async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
+            async with self._request_lock:
+                client = await self._connected_client(deadline)
+                entity = await client.get_entity(target.locator)
+                message = await client.get_messages(entity, ids=message_id)
+        if message is None or getattr(message, "document", None) is None:
+            raise FileNotFoundError("The original Telegram document is unavailable")
+        return int(self._peer_id_factory(entity)), message
 
     async def channel_avatar(
         self,

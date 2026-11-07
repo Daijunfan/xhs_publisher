@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import base64
 import hashlib
 import logging
@@ -244,6 +245,10 @@ class AgentsPublisher:
             args["url"] = record.source_url
         if avatar_id:
             args["avatarMediaId"] = avatar_id
+        if record.plugin_id == "youtube" and os.environ.get("DEEPSEEK_VIDEO_SUMMARY_ONLY") == "1":
+            marker = "\n\n## 全文中文翻译\n\n"
+            args["body"] = record.text.split(marker, 1)[0].removeprefix("## 视频总结\n\n")
+            args.pop("contentHash", None)  # Core computes the projected article hash.
         result = await self._call("channel.publish", args)
         status = result.get("status")
         if status not in {"created", "updated", "duplicate", "deleted", "expired"}:

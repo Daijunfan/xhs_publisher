@@ -435,7 +435,7 @@ def test_publish_media_retry_restart_ttl_reversion_and_revocation(tmp_path):
                         "48h export limit does not change cloud retention"
                     )
                     clean_expired_news(records, datetime.now(UTC))
-                    assert records.get("local-cloud-kept") is None
+                    assert records.get("local-cloud-kept"), "six-day cloud news remains"
                     assert (
                         db.connection.execute("SELECT count(*) FROM work_items").fetchone()[0] == 0
                     )

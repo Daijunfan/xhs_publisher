@@ -110,7 +110,7 @@ def _plugin(tmp_path: Path, client: FakeTelegramClient, logs=None) -> TelegramSo
             "default_post_limit": 100,
             "max_image_bytes": 20 * 1024 * 1024,
             "api_id": 2040,
-            "api_hash": "11111111111111111111111111111111",
+            "api_hash": "b18441a1ff607e10a989891a5462e627",
             "fetch_timeout_seconds": 90,
             "media_timeout_seconds": 90,
         },
@@ -226,7 +226,7 @@ def test_transport_failure_discards_client_and_reconnects(tmp_path: Path) -> Non
     transport = TelegramTransport(
         session_path=tmp_path / "telegram-user",
         api_id=2040,
-        api_hash="11111111111111111111111111111111",
+        api_hash="b18441a1ff607e10a989891a5462e627",
         max_image_bytes=1024,
         fetch_timeout_seconds=5,
         media_timeout_seconds=5,
@@ -258,7 +258,7 @@ def test_incomplete_read_discards_corrupted_client_and_reconnects(tmp_path: Path
     transport = TelegramTransport(
         session_path=tmp_path / "telegram-user",
         api_id=2040,
-        api_hash="11111111111111111111111111111111",
+        api_hash="b18441a1ff607e10a989891a5462e627",
         max_image_bytes=1024,
         fetch_timeout_seconds=5,
         media_timeout_seconds=5,
@@ -290,7 +290,7 @@ def test_connection_failure_discards_client_before_next_target(tmp_path: Path) -
     transport = TelegramTransport(
         session_path=tmp_path / "telegram-user",
         api_id=2040,
-        api_hash="11111111111111111111111111111111",
+        api_hash="b18441a1ff607e10a989891a5462e627",
         max_image_bytes=1024,
         fetch_timeout_seconds=5,
         media_timeout_seconds=5,
@@ -323,7 +323,7 @@ def test_completed_disconnected_future_reconnects_same_client(tmp_path: Path) ->
         transport = TelegramTransport(
             session_path=tmp_path / "telegram-user",
             api_id=2040,
-            api_hash="11111111111111111111111111111111",
+            api_hash="b18441a1ff607e10a989891a5462e627",
             max_image_bytes=1024,
             fetch_timeout_seconds=5,
             media_timeout_seconds=5,
@@ -349,7 +349,7 @@ def test_connection_lock_wait_is_bounded_by_collection_deadline(tmp_path: Path) 
         transport = TelegramTransport(
             session_path=tmp_path / "telegram-user",
             api_id=2040,
-            api_hash="11111111111111111111111111111111",
+            api_hash="b18441a1ff607e10a989891a5462e627",
             max_image_bytes=1024,
             fetch_timeout_seconds=5,
             media_timeout_seconds=5,
@@ -391,7 +391,7 @@ def test_shared_client_serializes_target_requests(tmp_path: Path) -> None:
         transport = TelegramTransport(
             session_path=tmp_path / "telegram-user",
             api_id=2040,
-            api_hash="11111111111111111111111111111111",
+            api_hash="b18441a1ff607e10a989891a5462e627",
             max_image_bytes=1024,
             fetch_timeout_seconds=5,
             media_timeout_seconds=5,
@@ -506,8 +506,6 @@ def test_session_activation_and_cli_callable_authorization_preserve_old_session(
     asyncio.run(
         authorize_telegram_session(
             current,
-            api_id=12345,
-            api_hash="11111111111111111111111111111111",
             client_factory=AuthorizingClient,
             output=messages.append,
             now=lambda: datetime(2026, 8, 19, tzinfo=UTC),

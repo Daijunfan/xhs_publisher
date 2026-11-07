@@ -23,6 +23,7 @@ from xhs_local.core.errors import (
     concise_error,
 )
 from xhs_local.core.states import WorkState, WorkTopic
+from xhs_local.processing.technology_news import TechnologyNewsProcessor
 from xhs_local.rendering.layout import paginate_text
 from xhs_local.rendering.renderer import HtmlPhotoGenerator
 from xhs_local.storage.dead_letters import DeadLetterRepository
@@ -223,7 +224,9 @@ class NewsPublicationService:
         records: RecordsRepository,
         ledger: PublicationLedger,
         remote_operations: RemoteOperationRepository,
-        processor,
+        processor: TechnologyNewsProcessor,
+        image_review: Callable[[tuple[Path, ...]], Awaitable[bool]],
+        final_text_review: Callable[[str], Awaitable[bool]],
         renderer: HtmlPhotoGenerator,
         sink: Any,
         sink_lock: asyncio.Lock,
@@ -243,6 +246,8 @@ class NewsPublicationService:
         self.ledger = ledger
         self.remote_operations = remote_operations
         self.processor = processor
+        self.image_review = image_review
+        self.final_text_review = final_text_review
         self.renderer = renderer
         self.sink = sink
         self.sink_lock = sink_lock
@@ -423,6 +428,22 @@ class NewsPublicationService:
             if candidate.plugin_id not in self.avatar_required_plugins
             or candidate.avatar is not None
         ]
+        approved_candidates = []
+        for candidate in candidates:
+            media = (*candidate.attachments, *((candidate.avatar,) if candidate.avatar else ()))
+            paths = tuple(item.absolute_path(self.runtime_root) for item in media)
+            if await self.image_review(paths):
+                approved_candidates.append(candidate)
+            else:
+                # Reject the entire story (including every album member), never just its image.
+                await asyncio.to_thread(
+                    self.ledger.mark_records,
+                    candidate.group_record_ids,
+                    "skipped",
+                    sink=self.sink_id,
+                    account_id=self.account_id,
+                )
+        candidates = approved_candidates
         if candidates:
             compose_options = {}
             if reason in {"startup", "capacity", "backlog", "catchup"}:
@@ -588,6 +609,26 @@ class NewsPublicationService:
         card_paths: list[Path] = []
         animation_dir: Path | None = None
         try:
+            final_text = "\n".join(
+                [
+                    editorial.title,
+                    editorial.body,
+                    *editorial.tags,
+                    *(f"{card['source']}\n{card['headline']}\n{card['text']}" for card in cards),
+                ]
+            )
+            if not await self.final_text_review(final_text):
+                await asyncio.to_thread(
+                    self.ledger.mark_records,
+                    selected_ids,
+                    "skipped",
+                    sink=self.sink_id,
+                    account_id=self.account_id,
+                )
+                await asyncio.to_thread(
+                    self.ledger.finish, slot, "filtered", details={"stage": "final_text"}
+                )
+                return "filtered"
             if any(animations):
                 animation_dir = Path(tempfile.mkdtemp(prefix="xhs-news-motion-"))
                 animations = await asyncio.to_thread(_materialize_gifs, animations, animation_dir)
@@ -600,6 +641,18 @@ class NewsPublicationService:
                 for index, card_path in enumerate(card_paths)
                 for path in (card_path, *animations[index])
             )
+            if not await self.image_review(upload_paths):
+                await asyncio.to_thread(
+                    self.ledger.mark_records,
+                    selected_ids,
+                    "skipped",
+                    sink=self.sink_id,
+                    account_id=self.account_id,
+                )
+                await asyncio.to_thread(
+                    self.ledger.finish, slot, "filtered", details={"stage": "final_poster"}
+                )
+                return "filtered"
             authorized = await asyncio.to_thread(
                 self.ledger.authorize_publish,
                 slot,

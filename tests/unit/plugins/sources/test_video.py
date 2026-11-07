@@ -107,7 +107,7 @@ def test_failed_video_is_retried_after_cursor_advances_and_peers_are_committed(t
         fail = True
         scans = []
 
-        async def discover(self, homepage, since):
+        async def discover(self, homepage, since, seen_video_ids=()):
             self.scans.append(since)
             return (
                 {
@@ -188,7 +188,7 @@ def test_discovery_saves_incremental_ids_and_uses_durable_video_queue(
         async def metadata(self, url):
             return {"timestamp": now.timestamp(), "title": "New video"}
 
-        async def discover(self, homepage, activated_at):
+        async def discover(self, homepage, activated_at, seen_video_ids=()):
             assert homepage == url
             return {
                 "entries": [

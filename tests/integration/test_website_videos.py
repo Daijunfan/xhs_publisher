@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -14,11 +15,19 @@ from xhs_local.configuration.models import AgentsTarget
 from xhs_local.core.contracts import AttachmentInput, SourceRecord
 from xhs_local.core.states import WorkState, WorkTopic
 from xhs_local.pipeline.agents import AgentsPublisher
+from xhs_local.processing.provider import DEFAULT_ENDPOINT, DeepSeekProvider, HttpResponse
+from xhs_local.processing.video_summary import VideoSummarizer
 from xhs_local.storage.outbox import OutboxRepository
 from xhs_local.storage.records import RecordsRepository
 from xhs_local.storage.schema import open_database
 from xhs_local.storage.work_items import WorkItemRepository
 from xhs_local.website import WebsiteVideos
+
+
+@pytest.fixture(autouse=True)
+def isolated_video_environment(monkeypatch):
+    for name in ("DEEPSEEK_VIDEO_ENDPOINT", "DEEPSEEK_VIDEO_KEY_FILE", "DEEPSEEK_VIDEO_MODEL"):
+        monkeypatch.delenv(name, raising=False)
 
 
 def video(key="video", **changes):
@@ -72,6 +81,7 @@ def make_videos(monkeypatch, tmp_path, records):
         raise AssertionError("Website video enrichment must not construct legacy review")
 
     monkeypatch.setattr("xhs_local.processing.provider.DeepSeekProvider", Provider)
+    monkeypatch.setattr("xhs_local.processing.technology_news.DeepSeekFilter", no_review)
     monkeypatch.setattr("xhs_local.pipeline.video.VideoPreparationService", Preparation)
     monkeypatch.setattr(
         "xhs_local.plugins.sources.youtube.client.YouTubeClient",
@@ -235,9 +245,9 @@ def test_start_close_uses_only_video_workers_and_does_not_recover_legacy_work(
         fixture = make_videos(monkeypatch, tmp_path, records)
         videos = fixture.videos
         options = fixture.preparation.options
-        assert not options.get("channel_mode", False) and "image_review" not in options
-        assert options["summarizer"] is None
-        assert fixture.providers == []
+        assert options["channel_mode"] is True and options["image_review"] is None
+        assert options["summarizer"].reviewer is None
+        assert fixture.providers == [{"api_key_path": tmp_path / "unused-key"}]
         assert set(videos.dispatcher.queues) == {WorkTopic.VIDEO_PREPARE}
         assert all(set(worker.handlers) == {WorkTopic.VIDEO_PREPARE} for worker in videos.workers)
         assert videos.recovery.topic == videos.retries.topic == WorkTopic.VIDEO_PREPARE
@@ -276,3 +286,82 @@ def test_start_close_uses_only_video_workers_and_does_not_recover_legacy_work(
         assert len(OutboxRepository(records.database).pending(WorkTopic.NEWS_PUBLISH)) == 1
 
     asyncio.run(run())
+
+
+def test_custom_video_gateway_uses_dedicated_key_for_summary_and_translation(
+    records, monkeypatch, tmp_path,
+):
+    endpoint = "https://school.example.test/llm-gw/v1/chat/completions"
+    secret = tmp_path / "school-key"
+    secret.write_text("  fixture-school-key\n")
+    monkeypatch.setenv("DEEPSEEK_VIDEO_ENDPOINT", endpoint)
+    monkeypatch.setenv("DEEPSEEK_VIDEO_KEY_FILE", str(secret))
+    monkeypatch.setenv("DEEPSEEK_VIDEO_MODEL", "deepseek-v4-flash")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "fixture-legacy-key-must-not-be-used")
+    fixture = make_videos(monkeypatch, tmp_path, records)
+    options = fixture.providers[0]
+    assert options["endpoint"] == endpoint
+    assert options["api_key"] == "fixture-school-key"
+    assert fixture.preparation.options["summarizer"].model == "deepseek-v4-flash"
+    calls = []
+
+    async def request(url, headers, payload, _timeout):
+        assert url == endpoint
+        assert headers["Authorization"] == "Bearer fixture-school-key"
+        assert payload["model"] == "deepseek-v4-flash"
+        assert payload["response_format"] == {"type": "json_object"}
+        assert payload["max_tokens"] == 6000
+        calls.append(payload)
+        return HttpResponse(200, json.dumps({"choices": [{
+            "finish_reason": "stop", "message": {
+                "reasoning_content": "Reasoning is not article content",
+                "content": json.dumps({"summary": "中文总结", "translation": "完整中文译文"}),
+            },
+        }]}))
+
+    summarizer = VideoSummarizer(
+        DeepSeekProvider(**options, request=request), None,
+        model=fixture.preparation.options["summarizer"].model,
+    )
+
+    async def run():
+        assert await summarizer.summarize("Title", "Complete source") == "中文总结"
+        assert await summarizer.translate_piece("Title", "Complete source") == "完整中文译文"
+
+    asyncio.run(run())
+    assert len(calls) == 2
+
+
+def test_custom_video_endpoint_without_dedicated_key_is_rejected(
+    records, monkeypatch, tmp_path,
+):
+    monkeypatch.setenv("DEEPSEEK_VIDEO_ENDPOINT", "https://school.example.test/chat/completions")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "fixture-legacy-key-must-not-leave")
+    with pytest.raises(ValueError, match="Custom video endpoint requires DEEPSEEK_VIDEO_KEY_FILE"):
+        make_videos(monkeypatch, tmp_path, records)
+
+
+@pytest.mark.parametrize("kind", ["unset-path", "missing", "empty", "invalid-encoding"])
+def test_video_dedicated_key_failure_never_falls_back_to_legacy_key(
+    records, monkeypatch, tmp_path, kind,
+):
+    secret = tmp_path / "invalid-key"
+    if kind == "empty":
+        secret.write_text(" \n")
+    elif kind == "invalid-encoding":
+        secret.write_bytes(b"\xffprivate-fixture-response")
+    monkeypatch.setenv("DEEPSEEK_VIDEO_KEY_FILE", "" if kind == "unset-path" else str(secret))
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "fixture-legacy-key-must-not-be-used")
+    with pytest.raises(ValueError, match="DEEPSEEK_VIDEO_KEY_FILE") as raised:
+        make_videos(monkeypatch, tmp_path, records)
+    assert "private-fixture-response" not in str(raised.value)
+    assert "fixture-legacy-key" not in str(raised.value)
+
+
+def test_explicit_official_video_endpoint_keeps_legacy_provider_configuration(
+    records, monkeypatch, tmp_path,
+):
+    monkeypatch.setenv("DEEPSEEK_VIDEO_ENDPOINT", DEFAULT_ENDPOINT)
+    fixture = make_videos(monkeypatch, tmp_path, records)
+    assert fixture.providers == [{"api_key_path": tmp_path / "unused-key"}]
+    assert fixture.preparation.options["summarizer"].model == "deepseek-flash"

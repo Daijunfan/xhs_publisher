@@ -1,0 +1,200 @@
+--- a/src/xhs_local/frontier/collector.py
++++ b/src/xhs_local/frontier/collector.py
+@@ -35,23 +35,16 @@
+ 
+     def __init__(self, snapshot, *args, **kwargs):
+         super().__init__(snapshot, *args, **kwargs)
+-        self.initial_targets = {t.id for s in snapshot.sources.sources for t in s.targets if s.enabled and t.enabled}
++        self.next_starts: dict[str, float] = {}
+ 
+     async def _target_loop(self, prepared, plugin, target, interval, token):
+         platform = self.status[target.id]["plugin_id"]
+-        peers = [
+-            t.id
+-            for s in self.snapshot.sources.sources
+-            if s.plugin == platform and s.enabled
+-            for t in s.targets
+-            if t.enabled
+-        ]
+-        index = peers.index(target.id)
+         spacing = 8.0 if platform == "youtube" else (0.25 if platform == "x" else 0.1)
+-        delay = min(1800.0, index * spacing) if target.id in self.initial_targets else 0
+-        self.initial_targets.discard(target.id)
+-        if delay:
+-            await self._wait_until(target.id, token, self._status_now() + timedelta(seconds=delay))
++        now = asyncio.get_running_loop().time()
++        slot = max(now, self.next_starts.get(platform, now))
++        self.next_starts[platform] = slot + spacing
++        if slot > now:
++            await self._wait_until(target.id, token, self._status_now() + timedelta(seconds=slot - now))
+         if not self.stopping and not token.cancelled:
+             await super()._target_loop(prepared, plugin, target, interval, token)
+ 
+--- a/src/xhs_local/plugins/sources/video/plugin.py
++++ b/src/xhs_local/plugins/sources/video/plugin.py
+@@ -2,10 +2,12 @@
+ 
+ from __future__ import annotations
+ 
++import asyncio
+ import re
+ from datetime import UTC, datetime, timedelta
+ from urllib.parse import urlsplit
+ 
++from xhs_local.core.errors import AuthenticationRequired
+ from xhs_local.core.contracts import CollectBatch, SourceRecord
+ from xhs_local.core.identifiers import stable_record_id
+ from xhs_local.core.states import WorkTopic
+@@ -70,15 +72,28 @@
+         cursor = datetime.fromisoformat(request.checkpoint.get("last_polled_at", activation))
+         scan_from = max(activated_at, cursor - timedelta(days=1))
+         seen = set(request.checkpoint.get("seen_video_ids", []))
+-        info = await self.client.discover(request.target.locator, scan_from, seen)
++        # A pending broadcast's cached status/metadata must be refreshed after it ends.
++        pending_entries = [dict(item) for item in request.checkpoint.get("pending_metadata", [])]
++        for entry in pending_entries:
++            if any(status in {"is_live", "is_upcoming", "post_live"} for status in (
++                    entry.get("live_status"), (entry.get("video_metadata") or {}).get("live_status"))):
++                entry.pop("live_status", None)
++                entry.pop("video_metadata", None)
++        pending_ids = {str(item["id"]) for item in pending_entries}
++        info = await self.client.discover(request.target.locator, scan_from, seen | pending_ids)
+         avatar = channel_avatar(info)
+         records = []
+         errors = 0
+         pending = []
+         attempted = set()
+-        entries = [*request.checkpoint.get("pending_metadata", []), *video_entries(info)]
+-        for entry in entries:
+-            request.ensure_active()
++        entries = [*video_entries(info), *pending_entries]
++        for index, entry in enumerate(entries):
++            request.cancellation.raise_if_cancelled()
++            remaining = request.remaining_seconds()
++            if remaining is not None and remaining < 15:
++                pending.extend(entries[index:])
++                errors += 1
++                break
+             video_id = str(entry["id"])
+             if video_id in seen or video_id in attempted:
+                 continue
+@@ -95,7 +110,8 @@
+                 if not metadata or not isinstance(
+                     metadata.get("release_timestamp") or metadata.get("timestamp"), (int, float)
+                 ):
+-                    metadata = await self.client.metadata(url)
++                    async with asyncio.timeout(remaining - 10 if remaining is not None else None):
++                        metadata = await self.client.metadata(url)
+                 published = metadata.get("release_timestamp") or metadata.get("timestamp")
+                 if not isinstance(published, (int, float)):
+                     raise ValueError("missing publication timestamp")
+@@ -131,6 +147,13 @@
+                         "error_class": type(error).__name__,
+                     },
+                 )
++                left = request.remaining_seconds()
++                if isinstance(error, AuthenticationRequired) or left is not None and left < 15:
++                    # Keep progress and retry peers before the failed item next time.
++                    pending.pop()
++                    pending.extend(entries[index + 1:])
++                    pending.append(entry)
++                    break
+                 continue
+             records.append(
+                 SourceRecord(
+--- a/src/xhs_local/plugins/sources/youtube/client.py
++++ b/src/xhs_local/plugins/sources/youtube/client.py
+@@ -15,59 +15,28 @@
+ 
+ 
+ def recent_uploads(info: dict, cutoff: float, resolve=None, seen_video_ids=()):
+-    seen_video_ids = set(seen_video_ids)
++    """Flat discovery only; exact watch metadata belongs to the durable plugin batch."""
++    known = set(seen_video_ids)
++    undated = 0
+     for entry in info.get("entries") or ():
+         if not isinstance(entry, dict):
+             continue
+         if "entries" in entry:
+-            yield from recent_uploads(entry, cutoff, resolve, seen_video_ids)
++            yield from recent_uploads(entry, cutoff, seen_video_ids=known)
+             continue
+-        if entry.get("timestamp") and entry["timestamp"] < cutoff:
++        timestamp = entry.get("timestamp")
++        if timestamp and timestamp < cutoff and entry.get("live_status") not in {"is_live", "is_upcoming"}:
+             break
+-        if entry.get("id") in seen_video_ids:
++        if not entry.get("id") or entry["id"] in known:
+             continue
+-        if not entry.get("timestamp") and resolve is not None and entry.get("id"):
+-            try:
+-                metadata = resolve(f"https://www.youtube.com/watch?v={entry['id']}")
+-                entry = {
+-                    **entry,
+-                    "timestamp": metadata.get("release_timestamp") or metadata.get("timestamp"),
+-                    "video_metadata": {
+-                        key: metadata.get(key)
+-                        for key in (
+-                            "id",
+-                            "title",
+-                            "timestamp",
+-                            "release_timestamp",
+-                            "duration",
+-                            "webpage_url",
+-                            "uploader",
+-                            "uploader_id",
+-                            "thumbnail",
+-                            "live_status",
+-                        )
+-                    },
+-                }
+-            except Exception as error:
+-                if "has been rate-limited by YouTube for up to an hour" in str(error):
+-                    raise
+-                pass  # The source retries this individual video without dropping its peers.
+-        if entry.get("timestamp") and entry["timestamp"] < cutoff:
+-            break
+-        elif entry.get("id"):
+-            yield {
+-                key: entry.get(key)
+-                for key in (
+-                    "id",
+-                    "title",
+-                    "timestamp",
+-                    "uploader",
+-                    "uploader_id",
+-                    "channel_id",
+-                    "live_status",
+-                    "video_metadata",
+-                )
+-            }
++        if not timestamp:
++            undated += 1
++            if undated > 30:
++                break
++        yield {key: entry.get(key) for key in (
++            "id", "title", "timestamp", "release_timestamp", "duration",
++            "uploader", "uploader_id", "channel_id", "live_status", "video_metadata",
++        )}
+ 
+ 
+ class YouTubeClient(VideoClient):
+@@ -127,7 +96,7 @@
+         ]
+         async with self.request_slot(), self.cookies() as cookie_file:
+             arguments.extend([cookie_file or "-", str(self.node_path or "-"), json.dumps(sorted(seen_video_ids))])
+-            return json.loads(await run_command(arguments))
++            return json.loads(await run_command(arguments, timeout=60))
+ 
+ 
+ def discover_uploads(
+@@ -154,8 +123,7 @@
+             "uploader": info.get("uploader"),
+             "thumbnails": info.get("thumbnails", []),
+             # VideoSourcePlugin skips seen IDs before requesting full metadata.
+-            "entries": list(recent_uploads(info, cutoff,
+-                lambda url: ydl.extract_info(url, download=False), seen_video_ids)),
++            "entries": list(recent_uploads(info, cutoff, seen_video_ids=seen_video_ids)),
+         }
+ 
+ 

@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import shutil
 import signal
 from contextlib import suppress
@@ -36,7 +37,7 @@ from xhs_local.core.states import WorkTopic
 from xhs_local.observability.health import HealthServer
 from xhs_local.observability.logging import configure_logging
 from xhs_local.observability.status import StatusStore
-from xhs_local.pipeline.agents import AgentsPublisher
+from xhs_local.pipeline.agents import DOCUMENT_HOURS, PUBLISH_HOURS, AgentsPublisher
 from xhs_local.pipeline.collector import Collector
 from xhs_local.pipeline.source_scheduler import SourceScheduler
 from xhs_local.plugins.registry import SourcePluginRegistry
@@ -48,7 +49,7 @@ from xhs_local.storage.retention import RetentionService
 from xhs_local.storage.schema import open_database
 
 INDEX = Path(__file__).parent / "rendering/templates/website.html"
-RETENTION_DAYS = 2
+RETENTION_DAYS = 7
 CLEANUP_SECONDS = 300
 
 
@@ -100,18 +101,12 @@ def clean_expired_news(records: RecordsRepository, now: datetime) -> dict[str, i
     with records.database.locked():
         while count := retention.purge_news(
             now - timedelta(days=RETENTION_DAYS),
-            documents_before=now - timedelta(days=RETENTION_DAYS),
+            documents_before=now - timedelta(hours=DOCUMENT_HOURS),
         ):
             removed += count
         while count := retention.purge_orphan_media(now):
             media += count
-        cutoff = now - timedelta(days=RETENTION_DAYS)
-        for directory in ("cache/source_media", "tmp", "generated/manual"):
-            while retention.purge_directory(directory, cutoff):
-                pass
-        retention.purge_completed_remote_operations(cutoff)
-        while retention.purge_terminal_work(cutoff):
-            pass
+        retention.purge_directory("cache/source_media", now - timedelta(days=7))
         retention.purge_news_posters()
     return {"records": removed, "media": media}
 
@@ -125,7 +120,9 @@ class WebsiteVideos:
         from xhs_local.pipeline.recovery import StartupRecovery
         from xhs_local.pipeline.retry_scheduler import RetryScheduler
         from xhs_local.pipeline.video import VideoPreparationService
+        from xhs_local.processing.provider import DEFAULT_ENDPOINT, DeepSeekProvider
         from xhs_local.processing.transcription import LocalWhisperClient
+        from xhs_local.processing.video_summary import VideoSummarizer
         from xhs_local.storage.dead_letters import DeadLetterRepository
         from xhs_local.storage.outbox import OutboxRepository
         from xhs_local.storage.work_items import WorkItemRepository
@@ -144,11 +141,40 @@ class WebsiteVideos:
         self.recovery = StartupRecovery(
             self.works, outbox, self.dispatcher, topic=WorkTopic.VIDEO_PREPARE
         )
+        endpoint = os.environ.get("DEEPSEEK_VIDEO_ENDPOINT", DEFAULT_ENDPOINT).strip()
+        key_file = os.environ.get("DEEPSEEK_VIDEO_KEY_FILE")
+        if endpoint != DEFAULT_ENDPOINT and key_file is None:
+            raise ValueError("Custom video endpoint requires DEEPSEEK_VIDEO_KEY_FILE")
+        provider_options = {
+            "api_key_path": snapshot.resolve(snapshot.publishing.news.deepseek_key_path),
+        }
+        if endpoint != DEFAULT_ENDPOINT:
+            provider_options["endpoint"] = endpoint
+        if key_file is not None:
+            if not key_file.strip():
+                raise ValueError("DEEPSEEK_VIDEO_KEY_FILE must not be empty")
+            try:
+                api_key = snapshot.resolve(key_file).read_text(encoding="utf-8").strip()
+            except (OSError, UnicodeError):
+                raise ValueError("Cannot read DEEPSEEK_VIDEO_KEY_FILE") from None
+            if not api_key:
+                raise ValueError("DEEPSEEK_VIDEO_KEY_FILE contains no key")
+            # Bind this endpoint to its own key; the legacy environment cannot override it.
+            provider_options["api_key"] = api_key
+        provider = DeepSeekProvider(**provider_options)
         self.service = VideoPreparationService(
             records=records, work_items=self.works, runtime_root=snapshot.runtime_root,
             client_for=lambda source_id: getattr(scheduler.plugins.get(source_id), "client", None),
-            transcription=LocalWhisperClient(snapshot.runtime_root / "models" / "whisper-turbo"),
-            summarizer=None, commit_ready=self._commit_ready,
+            transcription=LocalWhisperClient(
+                snapshot.runtime_root / "models" / "whisper-turbo",
+                device=os.environ.get("YOUTUBE_WHISPER_DEVICE", "cuda"),
+                compute_type=os.environ.get("YOUTUBE_WHISPER_COMPUTE_TYPE", "float16"),
+            ),
+            summarizer=VideoSummarizer(
+                provider, None, model=os.environ.get("DEEPSEEK_VIDEO_MODEL", "deepseek-flash")
+            ),
+            image_review=None, channel_mode=True, commit_ready=self._commit_ready,
+            summary_only=os.environ.get("DEEPSEEK_VIDEO_SUMMARY_ONLY") == "1",
         )
         self.workers = [PublisherWorker(
             queue, self.works, DeadLetterRepository(records.database),
@@ -159,7 +185,7 @@ class WebsiteVideos:
     def _eligible(self, record) -> bool:
         return (
             (record.source_id, record.target_id) in (self.scheduler.collector.targets or set())
-            and record.occurred_at >= datetime.now(UTC) - timedelta(days=RETENTION_DAYS)
+            and record.occurred_at >= datetime.now(UTC) - timedelta(hours=PUBLISH_HOURS)
         )
 
     def _commit_ready(self, record) -> bool:
@@ -201,13 +227,12 @@ class WebsiteVideos:
         await asyncio.to_thread(
             self.records.enqueue_pending_videos,
             self.scheduler.collector.targets or set(),
-            datetime.now(UTC) - timedelta(days=RETENTION_DAYS),
+            datetime.now(UTC) - timedelta(hours=PUBLISH_HOURS),
             config_revision=self.scheduler.snapshot.revision,
         )
         self.dispatcher.wake(WorkTopic.VIDEO_PREPARE)
 
     async def start(self) -> None:
-        self.status.update(video_enrichment={"active": [], "enabled": True})
         await self.enqueue()
         await self.recovery.run()
         self.tasks = [asyncio.create_task(worker.run()) for worker in self.workers]
@@ -503,7 +528,6 @@ class WebsitePosters:
 def create_website(
     records: RecordsRepository,
     subscriptions: WebsiteSubscriptions | None = None,
-    publication_api=None,
 ) -> web.Application:
     posters = WebsitePosters(records)
 
@@ -637,9 +661,6 @@ def create_website(
         return web.json_response({"ready": True, "mode": "website"})
 
     application = web.Application()
-    from xhs_local.plugins.sinks.xiaohongshu.http import add_publish_routes
-
-    add_publish_routes(application, records, api=publication_api)
     application.add_routes(
         [
             web.get("/", index),
@@ -712,10 +733,9 @@ async def run_website(snapshot: ConfigSnapshot) -> None:
         if agents is not None:
             await agents.start()
         await scheduler.start()
-        if any(s.enabled and s.plugin == "youtube" for s in snapshot.sources.sources):
+        if agents is not None:
             videos = WebsiteVideos(scheduler, records, status)
             await videos.start()
-        if agents is not None:
             agents_task = asyncio.create_task(agents.run(stop), name="agents-publisher")
         status.update(
             ready=True,

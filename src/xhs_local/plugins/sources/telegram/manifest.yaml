@@ -32,6 +32,7 @@ target_options:
     max_items: {type: integer, minimum: 1}
     collect_documents: {type: boolean}
     document_metadata_only: {type: boolean}
+    prefetch_documents: {type: boolean}
     lookback_hours: {type: number, minimum: 1}
     max_documents: {type: integer, minimum: 1}
     collect_timeout_seconds: {type: number, minimum: 1}

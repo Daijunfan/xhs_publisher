@@ -14,6 +14,12 @@ from dataclasses import replace
 from pathlib import Path
 
 
+def telegram_target_options(options):
+    return {**options, "collect_documents": True,
+            "document_metadata_only": options.get("prefetch_documents") is not True,
+            "lookback_hours": 168, "max_documents": 100}
+
+
 async def run(args):
     sys.path.insert(0, str(args.root / "src"))
     from xhs_local.configuration.loader import load_snapshot, snapshot_data, snapshot_from_data
@@ -42,7 +48,7 @@ async def run(args):
             for item in data["sources"]["sources"]:
                 if item["plugin"] == "telegram":
                     for target in item["targets"]:
-                        target.setdefault("options", {}).update(collect_documents=True, document_metadata_only=True, lookback_hours=168, max_documents=100)
+                        target["options"] = telegram_target_options(target.get("options", {}))
 
             candidate = snapshot_from_data(current.config_root, data)
             for source in candidate.sources.sources:
@@ -97,12 +103,14 @@ async def run(args):
     sync_task = None
     storage_task = None
     avatar_task = None
+    prefetch_task = None
     content_store = ChannelContentStore(work / "channel-content", runtime / "media" / "sha256")
     documents = ChannelDocumentRequests(content_store, scheduler, publisher)
     try:
         await publisher.start()
         storage_task = asyncio.create_task(serve_channel_storage(publisher, content_store, stop, documents.handle))
         await scheduler.start()
+        prefetch_task = asyncio.create_task(documents.run_prefetch(stop))
         avatar_task = asyncio.create_task(ChannelAuthorAvatars(publisher, scheduler, records, content_store).run(stop))
         videos = WebsiteVideos(scheduler, records, status)
         videos.workers = videos.workers[:1]
@@ -116,16 +124,16 @@ async def run(args):
             with suppress(TimeoutError):
                 await asyncio.wait_for(stop.wait(), timeout=5)
     finally:
-        for pending in (task, sync_task, storage_task, avatar_task):
+        for pending in (task, sync_task, storage_task, avatar_task, prefetch_task):
             if pending is not None:
                 pending.cancel()
-        await asyncio.gather(*(pending for pending in (task, sync_task, storage_task, avatar_task) if pending is not None),
+        await asyncio.gather(*(pending for pending in (task, sync_task, storage_task, avatar_task, prefetch_task) if pending is not None),
                              return_exceptions=True)
+        await documents.close()
         await scheduler.stop()
         if videos is not None:
             await videos.close()
         await publisher.close()
-        await documents.close()
         content_store.close()
         database.close()
         status.update(ready=False)

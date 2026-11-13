@@ -74,6 +74,7 @@ class TelegramSourcePlugin:
             "max_items",
             "collect_documents",
             "document_metadata_only",
+            "prefetch_documents",
             "lookback_hours",
             "max_documents",
             "collect_timeout_seconds",

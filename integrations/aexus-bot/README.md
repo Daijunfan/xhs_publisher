@@ -96,3 +96,11 @@ The own publisher uses `channel.media-register` after server-side image validati
 Original images remain on Linux; Mac browsing requests previews and explicit
 original reads/downloads keep the previous checksum path. Eight scoped workers
 serve requests without an additional public listener or operator token.
+
+## Opt-in magazine prefetch
+
+Set `options.prefetch_documents: true` on the selected Telegram target in the existing collector `config/sources.yaml`. The plugin manifest validates this boolean. Other targets and listing remain metadata-only. The opted-in target downloads new originals during Linux collection, before Core publication, so a temporarily disconnected Mac does not postpone those new files. A separate background loop backfills existing archive metadata through the same `ChannelDocumentRequests` path used by explicit downloads. Core subscription refresh preserves the target option.
+
+The loop handles newest publications first, resumes pending work after restart and retries failures after a five-minute cooldown. Only one background job is queued at a time, leaving the second transfer slot for user requests. Completed size/SHA-256 verified originals are stored under `channel-content/documents/`; user requests reuse or join that exact cache entry. Automatic prefetch does not bookmark or pin a post, alter its text, or download anything onto the Mac. Explicit user requests retain their normal server pin. Capacity limits still apply.
+
+Run `test_channel_content.py` and `test_document_prefetch.py` with the collector source on `PYTHONPATH` before deployment. For a staged test directory, set `AEXUS_XHS_ROOT` to that source root.

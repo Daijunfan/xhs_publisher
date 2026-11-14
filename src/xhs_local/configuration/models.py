@@ -154,10 +154,10 @@ class NewsPublishConfig(StrictModel):
     night_end_hour: int = Field(ge=0, le=23)
     new_post_threshold: PositiveInt
     max_news_per_note: int = Field(ge=1, le=18)
-    first_review_model: Literal["deepseek-v4-pro", "deepseek-v4-flash"] = Field(
+    first_review_model: Literal["deepseek-v4-pro", "deepseek-v4-flash", "deepseek-flash"] = Field(
         validation_alias=AliasChoices("first_review_model", "compliance_model")
     )
-    second_review_model: Literal["deepseek-v4-pro", "deepseek-v4-flash"] = Field(
+    second_review_model: Literal["deepseek-v4-pro", "deepseek-v4-flash", "deepseek-flash"] = Field(
         validation_alias=AliasChoices("second_review_model", "quality_model")
     )
     image_review_model: Literal["deepseek-flash"] = "deepseek-flash"

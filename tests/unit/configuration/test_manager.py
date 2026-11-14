@@ -9,11 +9,19 @@ import yaml
 
 from xhs_local.configuration.history import ConfigHistory
 from xhs_local.configuration.loader import ConfigurationError
+from xhs_local.configuration.loader import load_snapshot
 from xhs_local.configuration.manager import ConfigManager
 from xhs_local.storage.database import Database
 from xhs_local.storage.schema import migrate
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def test_shipped_configuration_loads_without_changing_selected_models() -> None:
+    snapshot = load_snapshot(PROJECT_ROOT / "config")
+    defaults = yaml.safe_load((PROJECT_ROOT / "config/publishing.yaml").read_text())
+    assert snapshot.publishing.news.second_review_model == defaults["news"]["second_review_model"]
+    assert snapshot.publishing.news.first_review_model != snapshot.publishing.news.second_review_model
 
 
 def _setup(tmp_path: Path):

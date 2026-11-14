@@ -278,8 +278,8 @@ class TelegramTransport:
     async def healthcheck(self, target: PluginTarget, deadline: float | None) -> int:
         client = None
         try:
-            async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
-                async with self._request_lock:
+            async with asyncio.timeout_at(deadline), self._request_lock:
+                async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
                     client = await self._connected_client(deadline)
                     entity = await client.get_entity(target.locator)
         except TRANSPORT_ERRORS:
@@ -300,14 +300,15 @@ class TelegramTransport:
         cancellation.raise_if_cancelled()
         client = None
         try:
-            async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
-                async with self._request_lock:
+            async with asyncio.timeout_at(deadline), self._request_lock:
+                async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
                     client = await self._connected_client(deadline)
                     entity = await client.get_entity(target.locator)
                     channel_id = int(self._peer_id_factory(entity))
                     request: dict[str, Any] = {"limit": limit}
                     if min_message_id is not None:
                         request["min_id"] = min_message_id
+                        request["reverse"] = True
                     messages: list[Any] = []
                     async for message in client.iter_messages(entity, **request):
                         cancellation.raise_if_cancelled()
@@ -320,8 +321,8 @@ class TelegramTransport:
 
     async def fetch_document(self, target, message_id: int, *, deadline, cancellation):
         cancellation.raise_if_cancelled()
-        async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
-            async with self._request_lock:
+        async with asyncio.timeout_at(deadline), self._request_lock:
+            async with asyncio.timeout(self._timeout(self.fetch_timeout_seconds, deadline)):
                 client = await self._connected_client(deadline)
                 entity = await client.get_entity(target.locator)
                 message = await client.get_messages(entity, ids=message_id)
@@ -341,8 +342,8 @@ class TelegramTransport:
         cancellation.raise_if_cancelled()
         client = None
         try:
-            async with asyncio.timeout(self._timeout(self.media_timeout_seconds, deadline)):
-                async with self._request_lock:
+            async with asyncio.timeout_at(deadline), self._request_lock:
+                async with asyncio.timeout(self._timeout(self.media_timeout_seconds, deadline)):
                     client = await self._connected_client(deadline)
                     entity = await client.get_entity(target.locator)
                     photo_id = getattr(getattr(entity, "photo", None), "photo_id", None)
@@ -382,8 +383,8 @@ class TelegramTransport:
             raise ValueError(f"image is {declared_size} bytes; limit is {self.max_image_bytes}")
         client = None
         try:
-            async with asyncio.timeout(self._timeout(self.media_timeout_seconds, deadline)):
-                async with self._request_lock:
+            async with asyncio.timeout_at(deadline), self._request_lock:
+                async with asyncio.timeout(self._timeout(self.media_timeout_seconds, deadline)):
                     client = await self._connected_client(deadline)
                     payload = await client.download_media(message, file=bytes)
         except TRANSPORT_ERRORS:

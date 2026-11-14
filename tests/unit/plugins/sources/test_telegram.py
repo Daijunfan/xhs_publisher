@@ -82,10 +82,10 @@ class FakeTelegramClient:
             raise RuntimeError("channel unavailable")
         return SimpleNamespace(id=42)
 
-    async def iter_messages(self, _entity, *, limit: int, min_id: int | None = None):
+    async def iter_messages(self, _entity, *, limit: int, min_id: int | None = None, reverse=False):
         self.min_ids.append(min_id)
         eligible = [message for message in self.messages if min_id is None or message.id > min_id]
-        for message in list(reversed(eligible))[:limit]:
+        for message in (eligible if reverse else list(reversed(eligible)))[:limit]:
             yield message
 
     async def download_media(self, message, *, file):
@@ -407,6 +407,112 @@ def test_shared_client_serializes_target_requests(tmp_path: Path) -> None:
 
         assert await asyncio.gather(first, second) == [42, 42]
         assert client.maximum_active == 1
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("operation", ["healthcheck", "messages", "document", "avatar", "image"])
+def test_request_queue_does_not_consume_telegram_network_timeout(tmp_path: Path, operation) -> None:
+    (tmp_path / "telegram-user.session").write_bytes(b"authorized fixture")
+
+    async def scenario():
+        class Client(FakeTelegramClient):
+            async def get_messages(self, _entity, *, ids):
+                return SimpleNamespace(id=ids, document=object())
+
+        client = Client(_messages())
+        transport = TelegramTransport(
+            session_path=tmp_path / "telegram-user", api_id=2040,
+            api_hash="b18441a1ff607e10a989891a5462e627", max_image_bytes=4096,
+            fetch_timeout_seconds=.02, media_timeout_seconds=.02,
+            client_factory=lambda *_: client, peer_id_factory=lambda entity: entity.id,
+        )
+        target = PluginTarget("telegram-test", "solidot", "Solidot")
+        deadline = time.monotonic() + 2
+        token = CancellationToken()
+        calls = {
+            "healthcheck": lambda: transport.healthcheck(target, deadline),
+            "messages": lambda: transport.fetch_messages(target, min_message_id=None, limit=1, deadline=deadline, cancellation=token),
+            "document": lambda: transport.fetch_document(target, 123, deadline=deadline, cancellation=token),
+            "avatar": lambda: transport.channel_avatar(target, known_photo_id=None, deadline=deadline, cancellation=token),
+            "image": lambda: transport.download_image(_messages()[0], channel_id=42, deadline=deadline, cancellation=token),
+        }
+        await transport._request_lock.acquire()  # noqa: SLF001
+        pending = asyncio.create_task(calls[operation]())
+        try:
+            await asyncio.sleep(.06)
+            assert not pending.done(), "Queued work must retain its own network timeout"
+        finally:
+            transport._request_lock.release()  # noqa: SLF001
+        await pending
+        await transport.close()
+
+    asyncio.run(scenario())
+
+
+def test_request_queue_still_obeys_collection_deadline(tmp_path: Path) -> None:
+    (tmp_path / "telegram-user.session").write_bytes(b"authorized fixture")
+
+    async def scenario():
+        transport = TelegramTransport(
+            session_path=tmp_path / "telegram-user", api_id=2040,
+            api_hash="b18441a1ff607e10a989891a5462e627", max_image_bytes=4096,
+            fetch_timeout_seconds=5, media_timeout_seconds=5,
+        )
+        await transport._request_lock.acquire()  # noqa: SLF001
+        try:
+            with pytest.raises(TimeoutError):
+                await transport.healthcheck(PluginTarget("fixture", "solidot", "Solidot"), time.monotonic() + .01)
+        finally:
+            transport._request_lock.release()  # noqa: SLF001
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("documents", [True, False])
+@pytest.mark.parametrize("seconds", [.3, 1.15])
+def test_busy_telegram_batch_commits_finished_images_and_resumes_without_skipping(tmp_path: Path, documents, seconds) -> None:
+    async def scenario():
+        class Client(FakeTelegramClient):
+            delayed = True
+
+            async def download_media(self, message, *, file):
+                if message.id == 102 and self.delayed:
+                    self.delayed = False
+                    await asyncio.sleep(2)
+                return await super().download_media(message, file=file)
+
+        client = Client(_messages())
+        plugin = _plugin(tmp_path, client)
+        target = PluginTarget("telegram-test", "solidot", "Solidot", {"collect_documents": documents})
+        request = _request(target)
+        from dataclasses import replace
+        request = replace(request, deadline=time.monotonic() + seconds)
+        async with asyncio.timeout_at(request.deadline):
+            first = await plugin.collect(request)
+        assert [record.external_id for record in first.records] == ["101"]
+        assert first.records[0].attachments
+        assert first.checkpoint["max_message_id"] == 101
+        second = await plugin.collect(_request(target, first.checkpoint))
+        assert [record.external_id for record in second.records] == ["102", "103"]
+        assert second.records[0].attachments
+        assert second.checkpoint["max_message_id"] == 103
+        await plugin.close()
+
+    asyncio.run(scenario())
+
+
+def test_incremental_telegram_pages_read_oldest_unseen_before_newer_messages(tmp_path: Path) -> None:
+    async def scenario():
+        client = FakeTelegramClient(_messages())
+        plugin = _plugin(tmp_path, client)
+        target = PluginTarget("telegram-test", "solidot", "Solidot", {"max_items": 2})
+        first = await plugin.collect(_request(target, {"max_message_id": 100}))
+        assert [record.external_id for record in first.records] == ["101", "102"]
+        assert first.checkpoint["max_message_id"] == 102
+        second = await plugin.collect(_request(target, first.checkpoint))
+        assert [record.external_id for record in second.records] == ["103"]
+        await plugin.close()
 
     asyncio.run(scenario())
 

@@ -14,6 +14,8 @@ source; preserve unrelated working-tree edits and private configuration.
 YouTube produces DeepSeek Chinese summaries and video links. It skips full
 translation and removes completed jobs' original audio and transcription files.
 Discovery defers full video metadata until already-seen IDs have been filtered.
+Core remains the subscription authority for Telegram, X and YouTube. File-storage hints enable document options only for Telegram; other platform schemas and configured credentials stay unchanged. Telegram public homepage/preview URLs are normalized to native channel handles. The worker applies the actual scheduler snapshot before acknowledging its revision.
+Queued Telegram requests retain their own network timeout after the shared client becomes available; the collection deadline still bounds queueing. This avoids dropping image or history requests during a large subscription import.
 `frontier-youtube-throughput.patch` additionally keeps discovery flat, rotates
 undated entries through durable pending metadata, commits partial progress before
 the collection deadline, and staggers dynamically added targets. Exact publication

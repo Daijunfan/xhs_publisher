@@ -310,10 +310,10 @@ class WebsiteSubscriptions:
                                                     "max_documents": 1,
                                                     "collect_timeout_seconds": 900,
                                                 }
-                                                if item.collectFiles
+                                                if item.plugin == "telegram" and item.collectFiles
                                                 else (
                                                     {"collect_documents": False}
-                                                    if "collect_documents" in old.options
+                                                    if item.plugin == "telegram" and "collect_documents" in old.options
                                                     else {}
                                                 )
                                             ),
@@ -340,7 +340,7 @@ class WebsiteSubscriptions:
                                     "max_documents": 1,
                                     "collect_timeout_seconds": 900,
                                 }
-                                if item.collectFiles
+                                if item.plugin == "telegram" and item.collectFiles
                                 else {},
                             )
                         )

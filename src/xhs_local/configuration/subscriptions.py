@@ -50,6 +50,15 @@ def parse_creator_link(value: str) -> tuple[str, TargetConfig]:
 
 def collector_locator(platform: str, locator: str) -> str:
     """Use existing homepage parsing to prepare Core's public forms for collectors."""
+    if platform == "telegram":
+        value = locator.strip()
+        link = re.fullmatch(
+            r"https?://(?:www\.)?(?:t\.me|telegram\.me)/(?:s/)?([A-Za-z0-9_]+)(?:/\d+)?/?(?:[?#].*)?",
+            value, re.IGNORECASE,
+        )
+        if link and link[1].lower() not in {"c", "joinchat", "addlist"}:
+            return link[1]
+        return value.removeprefix("@")
     if platform not in {"x", "youtube"}:
         return locator
     value = locator.strip()

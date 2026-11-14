@@ -140,6 +140,10 @@ class TelegramSourcePlugin:
         observed_at = observed_at.astimezone(UTC)
         documents = bool(request.target.options.get("collect_documents", False))
         metadata_only = bool(request.target.options.get("document_metadata_only", False))
+        # Leave time to return a durable partial batch before the scheduler cancels it.
+        remaining = request.remaining_seconds()
+        finish_margin = min(1., remaining * .1) if remaining is not None else 0
+        media_deadline = request.deadline - finish_margin if request.deadline is not None else None
         cutoff = observed_at - timedelta(
             hours=float(request.target.options.get("lookback_hours", self.lookback_hours))
         )
@@ -164,10 +168,10 @@ class TelegramSourcePlugin:
                 eligible.append(message)
         records = []
         errors = 0
-        if documents:
-            eligible.sort(key=lambda message: int(message.id))
+        eligible.sort(key=lambda message: int(message.id))
         handled_id = previous_id
         document_count = 0
+        unfinished = False
         for message in eligible:
             request.cancellation.raise_if_cancelled()
             media = None
@@ -182,7 +186,7 @@ class TelegramSourcePlugin:
                         message,
                         channel_id=channel_id,
                         directory=self.context.runtime_root / "cache" / "source_media",
-                        deadline=request.deadline,
+                        deadline=media_deadline,
                         cancellation=request.cancellation,
                     )
                     document_count += 1
@@ -190,7 +194,7 @@ class TelegramSourcePlugin:
                         thumbnail = await self.transport.document_preview(
                             message,
                             channel_id=channel_id,
-                            deadline=request.deadline,
+                            deadline=media_deadline,
                             cancellation=request.cancellation,
                             document=media.data if isinstance(media.data, Path) else None,
                         )
@@ -203,7 +207,7 @@ class TelegramSourcePlugin:
                     media = await self.transport.download_image(
                         message,
                         channel_id=channel_id,
-                        deadline=request.deadline,
+                        deadline=media_deadline,
                         cancellation=request.cancellation,
                     )
             except asyncio.CancelledError:
@@ -211,6 +215,9 @@ class TelegramSourcePlugin:
             except AuthenticationRequired:
                 raise
             except Exception as error:  # media failure must not discard the text record
+                if isinstance(error, TimeoutError) and request.deadline is not None and request.remaining_seconds() <= finish_margin:
+                    unfinished = True
+                    break
                 errors += 1
                 self.context.log(
                     "telegram_media_error",
@@ -262,7 +269,7 @@ class TelegramSourcePlugin:
             (int(message.id) for message in messages if int(message.id) > 0),
             default=previous_id,
         )
-        if documents:
+        if documents or unfinished:
             max_id = handled_id if eligible else max_id
         checkpoint = dict(request.checkpoint)
         checkpoint.update(
@@ -282,7 +289,7 @@ class TelegramSourcePlugin:
                 known_photo_id=previous_avatar.get("photo_id")
                 if previous_avatar.get("data")
                 else None,
-                deadline=request.deadline,
+                deadline=media_deadline,
                 cancellation=request.cancellation,
             )
             checked_at = observed_at.isoformat()

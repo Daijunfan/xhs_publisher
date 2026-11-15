@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
+from xhs_local.core.errors import AuthenticationRequired, TransientError
 from xhs_local.pipeline.source_scheduler import (
     NewsPublishScheduler,
     PeriodicNewsCadence,
     _failure_delay,
+    source_error_code,
 )
 
 
@@ -49,6 +51,11 @@ def test_source_failure_backoff_checks_recovery_within_five_minutes() -> None:
     assert _failure_delay(30, 1) == 60
     assert _failure_delay(30, 4) == 300
     assert _failure_delay(1800, 1) == 300
+
+
+def test_public_transport_failure_is_distinct_from_an_access_requirement() -> None:
+    assert source_error_code(TransientError("Public network failed")) == "network"
+    assert source_error_code(AuthenticationRequired("Access required")) == "login"
 
 
 def test_initial_collection_with_no_pending_posts_does_not_publish() -> None:

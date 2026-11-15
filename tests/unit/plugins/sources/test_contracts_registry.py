@@ -16,13 +16,18 @@ from xhs_local.plugins.registry import (
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
-def test_registry_discovers_sources_and_preserves_configured_targets() -> None:
+def test_registry_discovers_sources_and_preserves_configured_targets(tmp_path: Path) -> None:
     snapshot = load_snapshot(PROJECT_ROOT / "config")
     registry = SourcePluginRegistry()
 
-    assert set(registry.discover()) == {"telegram", "x", "youtube"}
+    assert set(registry.discover()) == {"telegram", "x", "youtube", "zhihu", "linkedin"}
     telegram_config = next(
         source for source in snapshot.sources.sources if source.plugin == "telegram"
+    )
+    session = tmp_path / "telegram.session"
+    session.write_bytes(b"")
+    telegram_config = telegram_config.model_copy(
+        update={"options": {**telegram_config.options, "session_path": str(session)}}
     )
     prepared = registry.prepare(
         telegram_config,
@@ -31,19 +36,7 @@ def test_registry_discovers_sources_and_preserves_configured_targets() -> None:
     )
 
     assert [target.locator for target in prepared.targets] == [
-        "GodlyNews1",
-        "xhqcankao",
-        "DNSPODT",
-        "solidot",
-        "zaihuapd",
-        "tnews365",
-        "thehackernews",
-        "AI_DeepLearning",
-        "DeepLearning_ai",
-        "Artificial_intelligence_in",
-        "computer_science_and_programming",
-        "linuxgram",
-        "machine_learning_courses",
+        target.locator for target in telegram_config.targets if target.enabled
     ]
     plugin = registry.create(prepared, client_factory=lambda *_args: object())
     assert isinstance(plugin, SourcePlugin)
@@ -65,10 +58,13 @@ def test_registry_discovers_sources_and_preserves_configured_targets() -> None:
     assert isinstance(registry.create(prepared_x), SourcePlugin)
 
 
-def test_offline_preflight_validates_manifest_import_contract_and_targets() -> None:
+def test_offline_preflight_validates_manifest_import_contract_and_targets(tmp_path: Path) -> None:
     snapshot = load_snapshot(PROJECT_ROOT / "config")
     registry = SourcePluginRegistry()
     source = next(item for item in snapshot.sources.sources if item.plugin == "telegram")
+    session = tmp_path / "telegram.session"
+    session.write_bytes(b"")
+    source = source.model_copy(update={"options": {**source.options, "session_path": str(session)}})
     prepared = registry.prepare(
         source,
         config_root=PROJECT_ROOT / "config",

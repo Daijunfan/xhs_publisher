@@ -19,9 +19,9 @@ from xhs_local.configuration.subscriptions import parse_creator_link
 from .models import now_iso
 from .preferences import ProductError, validate_version
 
-PLATFORMS = ("telegram", "x", "youtube")
-MIN_POLL = {"telegram": 60, "x": 300, "youtube": 1800}
-DEFAULT_POLL = {"telegram": 300, "x": 3600, "youtube": 7200}
+PLATFORMS = ("telegram", "x", "youtube", "zhihu", "linkedin")
+MIN_POLL = {"telegram": 60, "x": 300, "youtube": 1800, "zhihu": 900, "linkedin": 1800}
+DEFAULT_POLL = {"telegram": 300, "x": 3600, "youtube": 7200, "zhihu": 1800, "linkedin": 7200}
 PUBLIC_FIELDS = {"platform", "locator", "name", "enabled", "poll_seconds"}
 HEALTH_STATES = ("healthy", "error", "rate_limited", "auth_required", "checking", "offline", "pending")
 ERROR_CODES = {"404", "timeout", "rate-limit", "login", "TLS", "command-exit", "partial", "unknown"}
@@ -78,13 +78,13 @@ def _parse_url(value):
 
 def normalize_locator(platform: str, value: Any) -> tuple[str, str]:
     if platform not in PLATFORMS:
-        raise ProductError("unsupported_platform", "来源仅支持 Telegram、X 和 YouTube")
+        raise ProductError("unsupported_platform", "来源仅支持 Telegram、X、YouTube、知乎和 LinkedIn")
     if not isinstance(value, str) or not 1 <= len(value.strip()) <= 500:
         raise ProductError("invalid_locator", "请输入有效的频道或账号地址")
     value = value.strip()
     if any(ord(ch) < 32 for ch in value):
         raise ProductError("invalid_locator", "来源地址包含无效字符")
-    if platform in {"x", "youtube"}:
+    if platform in {"x", "youtube", "zhihu", "linkedin"}:
         if platform == "x" and re.fullmatch(r"@?[A-Za-z0-9_]{1,15}", value):
             value = "https://x.com/" + value.removeprefix("@")
         elif platform == "youtube" and value.startswith("@"):
@@ -149,7 +149,7 @@ def validate_fields(data: Any, *, creating: bool = False) -> dict:
         raise ProductError("missing_source_fields", "请选择平台并填写频道或账号")
     result = dict(data)
     if "platform" in result and result["platform"] not in PLATFORMS:
-        raise ProductError("unsupported_platform", "来源仅支持 Telegram、X 和 YouTube")
+        raise ProductError("unsupported_platform", "来源仅支持 Telegram、X、YouTube、知乎和 LinkedIn")
     if "name" in result:
         name = result["name"]
         if not isinstance(name, str) or not 1 <= len(name.strip()) <= 100:

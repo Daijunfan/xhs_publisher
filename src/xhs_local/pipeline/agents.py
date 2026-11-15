@@ -234,6 +234,9 @@ class AgentsPublisher:
             "authorUrl": source_homepage(target.plugin, target.locator),
             "mediaIds": media_ids,
         }
+        if record.plugin_id in {"zhihu", "linkedin"}:
+            args["authorName"] = record.payload.get("author_name") or record.source_name
+            args["authorUrl"] = record.payload.get("author_url") or args["authorUrl"]
         if files:
             if thumbnail_id:
                 files[0]["thumbnailMediaId"] = thumbnail_id

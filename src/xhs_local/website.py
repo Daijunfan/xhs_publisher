@@ -24,7 +24,7 @@ from xhs_local.configuration.loader import (
     snapshot_data,
     snapshot_from_data,
 )
-from xhs_local.configuration.models import AgentsTarget, SourcesConfig, TargetConfig
+from xhs_local.configuration.models import AgentsTarget, SourceConfig, SourcesConfig, TargetConfig
 from xhs_local.configuration.subscriptions import (
     collector_locator,
     creator_key,
@@ -279,14 +279,18 @@ class WebsiteSubscriptions:
         async with self.lock:
             current = self.scheduler.snapshot
             remaining = {(t.plugin, t.targetId): t for t in targets}
+            configured = list(current.sources.sources)
+            for plugin in sorted({target.plugin for target in targets} - {source.plugin for source in configured}):
+                if plugin in {"zhihu", "linkedin"}:
+                    configured.append(SourceConfig(id="agents-" + plugin, plugin=plugin, enabled=False, poll_seconds=1800 if plugin == "zhihu" else 7200))
             owners = {}
-            for source in current.sources.sources:
+            for source in configured:
                 owners.setdefault(source.plugin, source.id)
                 for target in source.targets:
                     if (source.plugin, target.id) in remaining:
                         owners[(source.plugin, target.id)] = source.id
             sources = []
-            for source in current.sources.sources:
+            for source in configured:
                 updated = []
                 for old in source.targets:
                     item = remaining.pop((source.plugin, old.id), None)

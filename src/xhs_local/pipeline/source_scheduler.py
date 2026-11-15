@@ -38,6 +38,8 @@ def source_error_code(error: BaseException) -> str:
         return "rate-limit"
     if category == "AUTH_REQUIRED":
         return "login"
+    if category == "TRANSIENT_NETWORK":
+        return "network"
     if isinstance(error, TimeoutError) or "timed out" in message or "deadline passed" in message:
         return "timeout"
     if isinstance(error, ssl.SSLError) or "certificate_verify_failed" in message:

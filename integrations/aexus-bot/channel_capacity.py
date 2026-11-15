@@ -39,7 +39,7 @@ class ArchiveCapacity:
 
     def usage(self):
         values = dict(self.db.execute("SELECT platform,bytes FROM platform_usage"))
-        return {platform:{"capacityBytes":self.capacity_bytes,"usedBytes":max(0,values.get(platform,0))} for platform in ("telegram","x","youtube")}
+        return {platform:{"capacityBytes":self.capacity_bytes,"usedBytes":max(0,values.get(platform,0))} for platform in ("telegram","x","youtube","zhihu","linkedin")}
 
     def enforce(self):
         evicted = []

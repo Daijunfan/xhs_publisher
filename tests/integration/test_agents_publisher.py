@@ -337,6 +337,47 @@ def test_managed_config_is_authoritative_hot_and_preserves_local_options(tmp_pat
     asyncio.run(run())
 
 
+@pytest.mark.parametrize("plugin", ["x", "zhihu", "linkedin"])
+def test_original_knowledge_authorship_does_not_rename_existing_platform_authors(tmp_path, plugin):
+    async def run():
+        core = Core()
+        locator = {
+            "x": "Example",
+            "zhihu": "https://daily.zhihu.com/",
+            "linkedin": "https://www.linkedin.com/company/example",
+        }[plugin]
+        core.targets = [{**target(plugin=plugin), "locator": locator}]
+        async with TestServer(core.application()) as server:
+            snapshot = config(tmp_path, str(server.make_url("")).rstrip("/"))
+            with open_database(snapshot.database_path, apply_migrations=True) as db:
+                records = RecordsRepository(db, snapshot.runtime_root)
+                item = replace(
+                    record(),
+                    plugin_id=plugin,
+                    source_name="Editorial collection",
+                    payload={"author_name": "Original author", "author_url": locator},
+                )
+                records.upsert(item)
+
+                async def apply(_targets):
+                    pass
+
+                bridge = AgentsPublisher(snapshot, records, apply, lambda **_: None)
+                try:
+                    await bridge.start()
+                    await bridge.publish_pending(asyncio.Event())
+                    post = core.posts[("core-one", item.external_id)]
+                    assert post["authorName"] == (
+                        "Editorial collection" if plugin == "x" else "Original author"
+                    )
+                    assert post["publishedAt"] == int(item.occurred_at.timestamp() * 1000)
+                    assert post["body"] == item.text
+                finally:
+                    await bridge.close()
+
+    asyncio.run(run())
+
+
 def test_publish_media_retry_restart_ttl_reversion_and_revocation(tmp_path):
     async def run():
         core = Core()

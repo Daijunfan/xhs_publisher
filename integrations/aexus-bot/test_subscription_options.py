@@ -75,6 +75,21 @@ class SubscriptionOptionsTests(unittest.IsolatedAsyncioTestCase):
             target = next(t for t in telegram.targets if t.id == "telegram-new")
             self.assertEqual(target.locator, "FixtureChannel")
 
+    async def test_new_public_platforms_hotplug_without_private_yaml_or_credentials(self):
+        rows = [AgentsTarget(sourceId="ns_zhihu", targetId="zhihu-daily", plugin="zhihu", locator="https://daily.zhihu.com/", name="Public Zhihu selections", enabled=True, pollSeconds=1800), AgentsTarget(sourceId="ns_linkedin", targetId="linkedin-research", plugin="linkedin", locator="https://uk.linkedin.com/showcase/FixtureResearch/posts", name="Public research", enabled=True, pollSeconds=7200)]
+        await self.manager.apply_agents_targets([self.target("youtube"), *rows])
+        sources = {source.plugin: source for source in self.scheduler.snapshot.sources.sources}
+        self.assertEqual(sources["zhihu"].id, "agents-zhihu")
+        self.assertEqual(sources["linkedin"].targets[0].locator, "https://www.linkedin.com/showcase/fixtureresearch")
+        self.assertEqual(sources["youtube"].options, {"fixture_auth_reference": "youtube"})
+        self.assertTrue(sources["youtube"].enabled)
+        self.assertEqual(sources["zhihu"].options, {})
+        self.assertEqual(sources["linkedin"].targets[0].options, {})
+        await self.manager.apply_agents_targets([self.target("youtube")])
+        inactive = {source.plugin: source for source in self.scheduler.snapshot.sources.sources}
+        self.assertFalse(inactive["zhihu"].enabled)
+        self.assertEqual(inactive["zhihu"].targets[0].id, "zhihu-daily")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

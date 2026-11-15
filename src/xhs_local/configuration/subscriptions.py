@@ -10,6 +10,7 @@ import yaml
 
 from .models import SourcesConfig, TargetConfig
 from .video_sources import creator_target
+from .knowledge_sources import linkedin_homepage, zhihu_locator_kind
 
 
 def parse_creator_link(value: str) -> tuple[str, TargetConfig]:
@@ -19,6 +20,15 @@ def parse_creator_link(value: str) -> tuple[str, TargetConfig]:
         raise ValueError("请输入 X 或 YouTube 博主主页链接")
     host = parsed.netloc.lower()
     path = unquote(parsed.path).rstrip("/")
+    if host in {"zhihu.com", "www.zhihu.com", "daily.zhihu.com"}:
+        kind = zhihu_locator_kind(value)
+        locator = "https://daily.zhihu.com/" if kind == "editorial" else "https://www.zhihu.com" + path.lower()
+        key = "daily" if kind == "editorial" else path.strip("/").replace("/", "-").lower()
+        return "zhihu", TargetConfig(id="zhihu-" + key, locator=locator, name=key)
+    if host.endswith("linkedin.com"):
+        locator = linkedin_homepage(value)
+        key = urlsplit(locator).path.strip("/").replace("/", "-")
+        return "linkedin", TargetConfig(id="linkedin-" + key, locator=locator, name=key)
     if host in {"x.com", "www.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"}:
         handle = path.removeprefix("/").removeprefix("@")
         if not re.fullmatch(r"[A-Za-z0-9_]{1,15}", handle) or handle.lower() in {
@@ -59,6 +69,11 @@ def collector_locator(platform: str, locator: str) -> str:
         if link and link[1].lower() not in {"c", "joinchat", "addlist"}:
             return link[1]
         return value.removeprefix("@")
+    if platform in {"zhihu", "linkedin"}:
+        found, target = parse_creator_link(locator)
+        if found != platform:
+            raise ValueError("Core subscription locator does not match its source platform")
+        return target.locator
     if platform not in {"x", "youtube"}:
         return locator
     value = locator.strip()

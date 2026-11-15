@@ -14,7 +14,7 @@ source; preserve unrelated working-tree edits and private configuration.
 YouTube produces DeepSeek Chinese summaries and video links. It skips full
 translation and removes completed jobs' original audio and transcription files.
 Discovery defers full video metadata until already-seen IDs have been filtered.
-Core remains the subscription authority for Telegram, X and YouTube. File-storage hints enable document options only for Telegram; other platform schemas and configured credentials stay unchanged. Telegram public homepage/preview URLs are normalized to native channel handles. The worker applies the actual scheduler snapshot before acknowledging its revision.
+Core remains the subscription authority for Telegram, X, YouTube, Zhihu and LinkedIn. File-storage hints enable document options only for Telegram; other platform schemas and configured credentials stay unchanged. Telegram public homepage/preview URLs are normalized to native channel handles. The worker applies the actual scheduler snapshot before acknowledging its revision.
 Queued Telegram requests retain their own network timeout after the shared client becomes available; the collection deadline still bounds queueing. This avoids dropping image or history requests during a large subscription import.
 `frontier-youtube-throughput.patch` additionally keeps discovery flat, rotates
 undated entries through durable pending metadata, commits partial progress before
@@ -91,8 +91,8 @@ Deploy `channel_queries.py` and `channel_capacity.py` with the other collector
 modules. Existing Pillow (verified 12.3.0) provides bounded WebP previews. SQLite
 FTS5/trigram and relational indexes keep reads independent of payload history;
 source count/read-watermark and platform byte ledgers avoid repeated whole-store
-scans. Only the migration builds indexes once. The existing filesystem has ample
-space; budgets do not preallocate 3 TB or alter partitions.
+scans. Only the migration builds indexes once. Platform budgets do not preallocate
+disk space or alter partitions.
 
 The own publisher uses `channel.media-register` after server-side image validation.
 Original images remain on Linux; Mac browsing requests previews and explicit
@@ -106,3 +106,27 @@ Set `options.prefetch_documents: true` on the selected Telegram target in the ex
 The loop handles newest publications first, resumes pending work after restart and retries failures after a five-minute cooldown. Only one background job is queued at a time, leaving the second transfer slot for user requests. Completed size/SHA-256 verified originals are stored under `channel-content/documents/`; user requests reuse or join that exact cache entry. Automatic prefetch does not bookmark or pin a post, alter its text, or download anything onto the Mac. Explicit user requests retain their normal server pin. Capacity limits still apply.
 
 Run `test_channel_content.py` and `test_document_prefetch.py` with the collector source on `PYTHONPATH` before deployment. For a staged test directory, set `AEXUS_XHS_ROOT` to that source root.
+
+## Public knowledge sources
+
+New Zhihu and LinkedIn subscriptions hot-plug through the same scoped Core
+snapshot. Missing source configurations are created in the Bot runtime projection
+as `agents-zhihu` and `agents-linkedin`; private Frontier YAML and existing source
+credentials remain untouched. Their default polling intervals are 30 minutes and
+two hours respectively.
+
+Zhihu currently collects public Daily editorial selections, original answer links,
+author attribution and substantive public discussion. Its day-precision timestamp
+is the editorial selection date, not the answer's creation date. An author
+candidate list does not establish full profile coverage; author-profile requests
+report an authorization requirement until an authorized interface is implemented.
+
+LinkedIn collects public original structured posts with the platform's exact
+publication date. It excludes other authors' reposts, recruiting, giveaways and
+registration promotions. Individual profiles and organizations share the same
+normalization and collection interface; actual public availability is verified
+separately. Public endpoints are bounded and deduplicated; 401/403/999 stop that
+attempt, and 429 backs off. The worker does not evade login or access restrictions.
+
+Run `tests/unit/plugins/sources/test_knowledge_sources.py`, the architecture tests
+and `test_subscription_options.py` with disposable state before deployment.

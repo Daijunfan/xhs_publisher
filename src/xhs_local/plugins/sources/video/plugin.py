@@ -7,8 +7,8 @@ import re
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 
-from xhs_local.core.errors import AuthenticationRequired
 from xhs_local.core.contracts import CollectBatch, SourceRecord
+from xhs_local.core.errors import AuthenticationRequired
 from xhs_local.core.identifiers import stable_record_id
 from xhs_local.core.states import WorkTopic
 from xhs_local.plugins.contracts import (
@@ -75,8 +75,13 @@ class VideoSourcePlugin:
         # A pending broadcast's cached status/metadata must be refreshed after it ends.
         pending_entries = [dict(item) for item in request.checkpoint.get("pending_metadata", [])]
         for entry in pending_entries:
-            if any(status in {"is_live", "is_upcoming", "post_live"} for status in (
-                    entry.get("live_status"), (entry.get("video_metadata") or {}).get("live_status"))):
+            if any(
+                status in {"is_live", "is_upcoming", "post_live"}
+                for status in (
+                    entry.get("live_status"),
+                    (entry.get("video_metadata") or {}).get("live_status"),
+                )
+            ):
                 entry.pop("live_status", None)
                 entry.pop("video_metadata", None)
         pending_ids = {str(item["id"]) for item in pending_entries}
@@ -148,7 +153,11 @@ class VideoSourcePlugin:
                     },
                 )
                 left = request.remaining_seconds()
-                if isinstance(error, AuthenticationRequired) or left is not None and left < 15:
+                if (
+                    isinstance(error, AuthenticationRequired)
+                    or getattr(error, "code", None) == "YOUTUBE_RATE_LIMITED"
+                    or left is not None and left < 15
+                ):
                     # Keep progress and retry peers before the failed item next time.
                     pending.pop()
                     pending.extend(entries[index + 1:])

@@ -1,12 +1,12 @@
 # xhs_publisher
 
-独立的 Telegram、X、YouTube 社交媒体采集服务。采集进程、原始媒体与内容索引运行在 Linux；[Aexus Bot](https://github.com/Daijunfan/Aexus-Bot) 是独立客户端，通过受控 API 管理订阅、读取、搜索和按需下载。
+独立的 Telegram、X、YouTube、知乎公开精选与评论、LinkedIn 原创内容采集服务。采集进程、原始媒体与内容索引运行在 Linux；[Aexus Bot](https://github.com/Daijunfan/Aexus-Bot) 是独立客户端，通过受控 API 管理订阅、读取、搜索和按需下载。
 
 ## Aexus Bot 集成
 
 采集器入口、订阅同步、原生作者头像、内容检索、按平台容量管理和外刊按需下载位于 [integrations/aexus-bot](integrations/aexus-bot/README.md)。完整采集后端位于 `src/xhs_local/`。
 
-- Telegram / X / YouTube 的采集、游标和重试在服务端执行。
+- 各平台的采集、游标和重试在服务端执行，Aexus Bot 统一管理订阅和查看服务端应用回执。
 - Aexus 模式只生成 YouTube 中文总结，不生成完整翻译；使用独立的 DeepSeek key 文件。
 - 各平台容量分别管理，已收藏内容与用户请求下载的文件保留；外刊收到下载请求后才获取。
 - 客户端不需要常驻保存未收藏的新闻或图片。
@@ -15,6 +15,8 @@
 集成模式不会自动发帖，也不会创建 Coding Agent。原有独立阅读与小红书发布能力保留，由用户显式启用。
 
 ## 开发
+
+项目提供三个 Python 入口：`xhs` 是通用采集与发布 CLI，`frontier` 提供信息工作台 HTTP 服务，`frontier-collector` 运行独立采集进程。Frontier 的浏览器资源随 Python 包发布，无需额外运行 Node 服务。
 
 ```sh
 uv sync --frozen --extra dev --python 3.12

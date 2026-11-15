@@ -66,6 +66,8 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
             "media.py",
             "migrations.py",
             "radar.py",
+            "dossier.py",
+            "evidence_change.py",
             "static",
         },
         "core": {
@@ -85,6 +87,7 @@ def test_documented_production_modules_match_the_physical_tree_exactly() -> None
             "models.py",
             "video_sources.py",
             "subscriptions.py",
+            "knowledge_sources.py",
         },
         "storage": {
             "__init__.py",
@@ -172,6 +175,9 @@ def test_repository_has_no_legacy_runtime_or_literal_placeholder_directories() -
         "frontier_release.py",
         "frontier_v2_checks.py",
         "frontier_archive.py",
+        "frontier_cloud_daily_dispatcher.py",
+        "aexus_channel_provider.py",
+        "channel_retention.py",
     }
     assert required_ops <= _names(PROJECT_ROOT / "ops")
     assert _names(PROJECT_ROOT / "ops") <= required_ops | {

@@ -8,11 +8,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = PROJECT_ROOT / "src/xhs_local"
 
 
-def test_pyproject_exposes_one_python_application_entrypoint() -> None:
+def test_pyproject_exposes_only_documented_python_entrypoints() -> None:
     project = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
     assert project["project"]["requires-python"].startswith(">=3.12")
-    assert project["project"]["scripts"] == {"xhs": "xhs_local.cli:main"}
+    assert project["project"]["scripts"] == {
+        "xhs": "xhs_local.cli:main",
+        "frontier": "xhs_local.frontier.web:main",
+        "frontier-collector": "xhs_local.frontier.collector:main",
+    }
     assert project["tool"]["setuptools"]["package-dir"] == {"": "src"}
     main_module = ast.parse((SOURCE_ROOT / "__main__.py").read_text(encoding="utf-8"))
     imports = [node for node in ast.walk(main_module) if isinstance(node, ast.ImportFrom)]
@@ -34,7 +38,9 @@ def test_production_package_has_no_node_runtime_entrypoint() -> None:
     scripts = sorted(SOURCE_ROOT.rglob("*.js"))
 
     assert forbidden == []
-    assert scripts == []
+    # Frontier ships a browser UI, not a second Node application/runtime.
+    assert scripts
+    assert all(path.is_relative_to(SOURCE_ROOT / "frontier/static/assets") for path in scripts)
     # yt-dlp may run its own YouTube JS extractor. This is a media-tool dependency,
     # not a second application, hand-written JS service, or Node publication runtime.
     video_adapter = SOURCE_ROOT / "plugins/sources/video/client.py"

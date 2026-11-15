@@ -89,7 +89,7 @@ def make_videos(monkeypatch, tmp_path, records):
     )
     monkeypatch.setattr(
         "xhs_local.processing.transcription.LocalWhisperClient",
-        lambda _root: SimpleNamespace(),
+        lambda _root, **options: SimpleNamespace(options=options),
     )
     snapshot = SimpleNamespace(
         revision="fixture-revision", runtime_root=tmp_path / "runtime",

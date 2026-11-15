@@ -50,6 +50,8 @@ def test_wheel_contains_runtime_templates_scripts_manifests_and_migrations(
             "xhs_local/plugins/sources/telegram/manifest.yaml",
             "xhs_local/plugins/sources/x/manifest.yaml",
             "xhs_local/plugins/sources/youtube/manifest.yaml",
+            "xhs_local/plugins/sources/zhihu/manifest.yaml",
+            "xhs_local/plugins/sources/linkedin/manifest.yaml",
             "xhs_local/storage/migrations/001_initial.sql",
             "xhs_local/storage/migrations/002_work_outbox.sql",
             "xhs_local/storage/migrations/003_config_dlq_retention.sql",

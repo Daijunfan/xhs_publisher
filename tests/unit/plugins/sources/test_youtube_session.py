@@ -198,7 +198,7 @@ def test_youtube_uses_official_pacing_for_cli_and_discovery(monkeypatch):
     assert options[0]["max_sleep_interval"] == 20
 
 
-def test_discovery_stops_resolving_peer_metadata_after_explicit_rate_limit():
+def test_flat_discovery_never_resolves_peer_metadata():
     from xhs_local.plugins.sources.youtube.client import recent_uploads
 
     calls = []
@@ -207,13 +207,12 @@ def test_discovery_stops_resolving_peer_metadata_after_explicit_rate_limit():
         calls.append(url)
         raise RuntimeError("Your account has been rate-limited by YouTube for up to an hour")
 
-    with pytest.raises(RuntimeError, match="rate-limited"):
-        list(recent_uploads({"entries": [{"id": "one"}, {"id": "two"}]}, 0, limited))
-    assert len(calls) == 1
+    entries = list(recent_uploads({"entries": [{"id": "one"}, {"id": "two"}]}, 0, limited))
+    assert [entry["id"] for entry in entries] == ["one", "two"]
+    assert calls == []
 
 
 def test_discovery_defers_video_metadata_until_seen_ids_are_filtered(monkeypatch):
-    from xhs_local.plugins.sources import youtube
     from xhs_local.plugins.sources.youtube import client
     calls = []
     class Feed:
@@ -223,8 +222,15 @@ def test_discovery_defers_video_metadata_until_seen_ids_are_filtered(monkeypatch
         def extract_info(self, url, **kwargs):
             calls.append(url)
             assert url == "https://youtube.com/@fixture"
-            return {"entries": [{"id": "old-video"}, {"id": "new-video", "title": "New video", "timestamp": 42}]}
+            return {
+                "entries": [
+                    {"id": "old-video"},
+                    {"id": "new-video", "title": "New video", "timestamp": 42},
+                ]
+            }
     monkeypatch.setattr(client, "YoutubeDL", Feed)
-    result = client.discover_uploads("https://youtube.com/@fixture", 0, seen_video_ids={"old-video"})
+    result = client.discover_uploads(
+        "https://youtube.com/@fixture", 0, seen_video_ids={"old-video"}
+    )
     assert result["entries"][0]["id"] == "new-video"
     assert calls == ["https://youtube.com/@fixture"]

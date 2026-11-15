@@ -1,30 +1,19 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from runtime_fixture import prepare_runtime
 
 from xhs_local.app import LocalApplication
 from xhs_local.core.errors import TransientError
 from xhs_local.core.states import WorkState, WorkTopic
-from xhs_local.storage.database import Database
-from xhs_local.storage.schema import migrate
 
 
 async def make_app(tmp_path):
-    config = tmp_path / "config"
-    runtime = tmp_path / "runtime"
-    shutil.copytree(Path(__file__).resolve().parents[2] / "config", config)
-    for name in ("sessions", "secrets"):
-        (runtime / name).mkdir(parents=True)
-    (runtime / "sessions/telegram-user.session").write_bytes(b"offline-fixture")
-    (runtime / "secrets/deepseek-api-key").write_text("test-key")
-    with Database(runtime / "app.sqlite3") as db:
-        migrate(db)
+    config, _runtime = prepare_runtime(tmp_path, publication=True)
     return await LocalApplication.create(config)
 
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.util
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -10,7 +12,8 @@ from xhs_local.processing import transcription
 from xhs_local.processing.transcription import LocalWhisperClient
 
 
-def test_local_transcription_reuses_model_and_checks_complete_audio(tmp_path, monkeypatch):
+@pytest.mark.parametrize("device,threads", [("cuda", 0), ("cpu", 8)])
+def test_local_transcription_reuses_model_and_checks_complete_audio(tmp_path, device, threads):
     audio = tmp_path / "audio.mp3"
     audio.write_bytes(b"sample")
     loads = []
@@ -26,8 +29,7 @@ def test_local_transcription_reuses_model_and_checks_complete_audio(tmp_path, mo
                 SimpleNamespace(duration=10.0, language="en")
             )
 
-    monkeypatch.setattr(transcription, "WhisperModel", Model)
-    client = LocalWhisperClient(tmp_path / "model")
+    client = LocalWhisperClient(tmp_path / "model", device=device, model_factory=Model)
 
     async def run():
         task_id = await client.submit(await client.upload(audio))
@@ -40,4 +42,17 @@ def test_local_transcription_reuses_model_and_checks_complete_audio(tmp_path, mo
 
     asyncio.run(run())
     assert len(loads) == 1
-    assert loads[0][1] == {"device": "cuda", "compute_type": "float16"}
+    assert loads[0][1] == {
+        "device": device,
+        "compute_type": "float16",
+        "cpu_threads": threads,
+    }
+
+
+def test_cloud_transcription_does_not_require_the_local_model_dependency(tmp_path, monkeypatch):
+    monkeypatch.setitem(sys.modules, "faster_whisper", None)
+    spec = importlib.util.spec_from_file_location("isolated_transcription", transcription.__file__)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    client = module.ParaformerClient(tmp_path / "key", request=lambda *_: None)
+    assert client.model == "paraformer-v2"

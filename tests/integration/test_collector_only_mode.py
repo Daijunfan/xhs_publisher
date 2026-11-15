@@ -42,9 +42,11 @@ def test_direct_legacy_start_is_blocked_for_agents_mode(monkeypatch, tmp_path):
     assert not list(tmp_path.iterdir())
 
 
-def test_deployed_config_has_no_xiaohongshu_publish_route():
+def test_public_config_requires_explicit_collector_enablement_and_has_no_publish_route():
     from pathlib import Path
+
+    from xhs_local.app import LocalApplication
     snapshot = load_snapshot(Path(__file__).resolve().parents[2] / "config")
-    assert snapshot.app.agents.enabled
-    assert not snapshot.publishing.sinks.xiaohongshu.enabled
+    assert not snapshot.app.agents.enabled
     assert not any(r.enabled and "xiaohongshu" in r.sinks for r in snapshot.publishing.routes)
+    assert LocalApplication._route_for(snapshot, "tech_news") is None

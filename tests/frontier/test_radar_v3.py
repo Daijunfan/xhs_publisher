@@ -553,7 +553,15 @@ class RadarApiTests(unittest.IsolatedAsyncioTestCase):
             },
         )
         overview = await self._get("/api/radar?plan=free&days=9999")
-        self.assertEqual(set(overview), {"plan", "topics", "generated_at"})
+        self.assertEqual(set(overview), {
+            "plan", "topics", "generated_at", "coverage_today", "global_signals",
+            "orientation_samples", "value_feedback", "owner_revision",
+        })
+        self.assertIsInstance(overview["coverage_today"], dict)
+        self.assertIsInstance(overview["global_signals"], list)
+        self.assertEqual(overview["orientation_samples"], [])
+        self.assertIsInstance(overview["value_feedback"], dict)
+        self.assertGreaterEqual(overview["owner_revision"], 1)
         self.assertEqual(overview["plan"]["id"], "analyst")  # Query cannot elevate/override plan.
         self.assertEqual(overview["plan"]["limits"]["history_days"], 90)
         self.assertEqual(len(overview["topics"]), 1)

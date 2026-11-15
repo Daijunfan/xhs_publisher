@@ -2,18 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import json
-import shutil
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pytest
+from runtime_fixture import prepare_runtime
 
 from xhs_local.app import LocalApplication
 from xhs_local.core.states import WorkTopic
-from xhs_local.storage.database import Database
-from xhs_local.storage.schema import migrate
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,14 +31,7 @@ def test_daily_news_cutoff_keeps_the_final_twenty_minutes() -> None:
 
 @pytest.mark.parametrize("downtime", [5, 20, 21, None])
 def test_restart_resumes_or_catches_up_once_per_platform(tmp_path, monkeypatch, downtime):
-    config_root, runtime_root = tmp_path / "config", tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
+    config_root, runtime_root = prepare_runtime(tmp_path, publication=True)
     startup = datetime(2026, 9, 13, 8, 0, tzinfo=UTC)
     previous_run = startup - timedelta(minutes=10)
     if downtime is not None:
@@ -116,15 +107,7 @@ def test_restart_resumes_or_catches_up_once_per_platform(tmp_path, monkeypatch, 
 
 
 def test_startup_collection_timeout_cannot_block_formal_scheduling(tmp_path: Path) -> None:
-    config_root = tmp_path / "config"
-    runtime_root = tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key", encoding="utf-8")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
+    config_root, runtime_root = prepare_runtime(tmp_path, publication=True)
 
     async def scenario() -> None:
         application = await LocalApplication.create(config_root)
@@ -154,15 +137,7 @@ def test_startup_collection_timeout_cannot_block_formal_scheduling(tmp_path: Pat
 
 
 def test_startup_publication_waits_for_the_global_news_interval(tmp_path: Path) -> None:
-    config_root = tmp_path / "config"
-    runtime_root = tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key", encoding="utf-8")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
+    config_root, runtime_root = prepare_runtime(tmp_path, publication=True)
 
     async def scenario() -> None:
         application = await LocalApplication.create(config_root)
@@ -206,15 +181,7 @@ def test_startup_publication_waits_for_the_global_news_interval(tmp_path: Path) 
 
 
 def test_scheduler_enqueue_waits_until_news_handler_finishes(tmp_path: Path) -> None:
-    config_root = tmp_path / "config"
-    runtime_root = tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key", encoding="utf-8")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
+    config_root, runtime_root = prepare_runtime(tmp_path, publication=True)
 
     async def scenario() -> None:
         application = await LocalApplication.create(config_root)
@@ -276,21 +243,22 @@ def test_scheduler_enqueue_waits_until_news_handler_finishes(tmp_path: Path) -> 
 def test_application_builds_shared_cadence_for_telegram_x_and_youtube(
     tmp_path: Path,
 ) -> None:
-    config_root = tmp_path / "config"
-    runtime_root = tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key", encoding="utf-8")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
+    config_root, runtime_root = prepare_runtime(tmp_path, publication=True)
 
     async def scenario() -> None:
         application = await LocalApplication.create(config_root)
         try:
             assert set(application.news_schedulers) == {"telegram", "x", "youtube"}
-            assert len(application.news_schedulers["telegram"].initial_pending) == 13
+            expected_telegram_targets = {
+                target.id
+                for source in application.snapshot.sources.sources
+                if source.plugin == "telegram" and source.enabled
+                for target in source.targets
+                if target.enabled
+            }
+            assert (
+                application.news_schedulers["telegram"].initial_pending == expected_telegram_targets
+            )
             expected_x_targets = {
                 target.id
                 for source in application.snapshot.sources.sources

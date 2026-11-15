@@ -148,6 +148,44 @@ def test_failed_video_is_retried_after_cursor_advances_and_peers_are_committed(t
     assert second.checkpoint["activated_at"] == activation
 
 
+@pytest.mark.parametrize(
+    "failure",
+    [
+        AuthenticationRequired("Session needs renewal"),
+        TransientError("Platform cooldown", code="YOUTUBE_RATE_LIMITED"),
+    ],
+)
+def test_metadata_access_and_rate_limits_stop_peers_without_losing_pending_entries(
+    tmp_path, failure
+):
+    now = datetime.now(UTC)
+
+    class Client:
+        def __init__(self):
+            self.calls = []
+
+        async def discover(self, _homepage, _since, _seen):
+            return {"entries": [{"id": "one"}, {"id": "two"}]}
+
+        async def metadata(self, url):
+            self.calls.append(url)
+            raise failure
+
+    client = Client()
+    context = SourcePluginContext("youtube", tmp_path, {})
+    target = PluginTarget("youtube-example", "https://www.youtube.com/@Example", "Example")
+    batch = asyncio.run(
+        YouTubeSourcePlugin(context, client=client).collect(
+            CollectRequest(
+                "youtube", target, {"activated_at": (now - timedelta(days=1)).isoformat()}, now
+            )
+        )
+    )
+    assert client.calls == ["https://www.youtube.com/watch?v=one"]
+    assert not batch.records and batch.errors == 1
+    assert [entry["id"] for entry in batch.checkpoint["pending_metadata"]] == ["two", "one"]
+
+
 def test_youtube_exact_time_excludes_a_pre_activation_video_despite_relative_date(tmp_path):
     now = datetime.now(UTC)
 

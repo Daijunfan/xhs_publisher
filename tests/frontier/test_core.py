@@ -14,6 +14,7 @@ import sqlite3
 import stat
 import tempfile
 import unittest
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -70,6 +71,14 @@ class FakeModelClient:
 
 class FrontierCoreTests(unittest.TestCase):
     def setUp(self):
+        class FixtureClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026, 10, 20, 12, tzinfo=UTC).astimezone(tz)
+
+        clock = patch("xhs_local.frontier.store.datetime", FixtureClock)
+        clock.start()
+        self.addCleanup(clock.stop)
         self.temporary = tempfile.TemporaryDirectory(prefix="frontier-contract-")
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)

@@ -1,30 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 from pathlib import Path
 
 import yaml
+from runtime_fixture import prepare_runtime as _prepare_runtime
 
 from xhs_local.app import LocalApplication
 from xhs_local.observability.status import read_status
-from xhs_local.storage.database import Database
-from xhs_local.storage.schema import migrate
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-
-def _prepare_runtime(tmp_path: Path) -> tuple[Path, Path]:
-    config_root = tmp_path / "config"
-    runtime_root = tmp_path / "runtime"
-    shutil.copytree(PROJECT_ROOT / "config", config_root)
-    (runtime_root / "sessions").mkdir(parents=True)
-    (runtime_root / "sessions/telegram-user.session").write_bytes(b"offline-session-fixture")
-    (runtime_root / "secrets").mkdir(parents=True)
-    (runtime_root / "secrets/deepseek-api-key").write_text("test-key", encoding="utf-8")
-    with Database(runtime_root / "app.sqlite3") as database:
-        migrate(database)
-    return config_root, runtime_root
 
 
 def test_application_falls_back_to_last_active_revision_when_files_are_invalid(

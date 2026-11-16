@@ -48,7 +48,7 @@ class AgentsTarget(StrictModel):
     collectFiles: bool = False
     sourceId: str = Field(min_length=1)
     targetId: str = Field(min_length=1)
-    plugin: Literal["telegram", "x", "youtube", "zhihu", "linkedin"]
+    plugin: Literal["telegram", "x", "youtube", "zhihu", "linkedin", "reddit"]
     locator: str = Field(min_length=1)
     name: str = Field(min_length=1)
     enabled: bool

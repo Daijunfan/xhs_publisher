@@ -39,7 +39,7 @@ class FrontierScheduler(SourceScheduler):
 
     async def _target_loop(self, prepared, plugin, target, interval, token):
         platform = self.status[target.id]["plugin_id"]
-        spacing = 8.0 if platform == "youtube" else 2.0 if platform == "linkedin" else (0.25 if platform == "x" else 0.1)
+        spacing = 15.0 if platform == "reddit" else 8.0 if platform == "youtube" else 2.0 if platform == "linkedin" else (0.25 if platform == "x" else 0.1)
         now = asyncio.get_running_loop().time()
         slot = max(now, self.next_starts.get(platform, now))
         self.next_starts[platform] = slot + spacing

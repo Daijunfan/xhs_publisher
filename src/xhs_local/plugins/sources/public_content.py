@@ -55,7 +55,7 @@ Request = Callable[[str, float, int], PublicResponse]
 class PublicRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, fp, code, message, headers, new_url):
         parsed = urlsplit(new_url)
-        hosts = ("linkedin.com", "licdn.com", "zhihu.com", "zhimg.com")
+        hosts = ("linkedin.com", "licdn.com", "zhihu.com", "zhimg.com", "reddit.com", "redd.it", "redditmedia.com")
         if (
             parsed.scheme != "https"
             or parsed.username

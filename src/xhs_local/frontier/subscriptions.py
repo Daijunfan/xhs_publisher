@@ -19,9 +19,9 @@ from xhs_local.configuration.subscriptions import parse_creator_link
 from .models import now_iso
 from .preferences import ProductError, validate_version
 
-PLATFORMS = ("telegram", "x", "youtube", "zhihu", "linkedin")
-MIN_POLL = {"telegram": 60, "x": 300, "youtube": 1800, "zhihu": 900, "linkedin": 1800}
-DEFAULT_POLL = {"telegram": 300, "x": 3600, "youtube": 7200, "zhihu": 1800, "linkedin": 7200}
+PLATFORMS = ("telegram", "x", "youtube", "zhihu", "linkedin", "reddit")
+MIN_POLL = {"telegram": 60, "x": 300, "youtube": 1800, "zhihu": 900, "linkedin": 1800, "reddit": 1800}
+DEFAULT_POLL = {"telegram": 300, "x": 3600, "youtube": 7200, "zhihu": 1800, "linkedin": 7200, "reddit": 1800}
 PUBLIC_FIELDS = {"platform", "locator", "name", "enabled", "poll_seconds"}
 HEALTH_STATES = ("healthy", "error", "rate_limited", "auth_required", "checking", "offline", "pending")
 ERROR_CODES = {"404", "timeout", "rate-limit", "login", "TLS", "command-exit", "partial", "unknown"}
@@ -84,7 +84,7 @@ def normalize_locator(platform: str, value: Any) -> tuple[str, str]:
     value = value.strip()
     if any(ord(ch) < 32 for ch in value):
         raise ProductError("invalid_locator", "来源地址包含无效字符")
-    if platform in {"x", "youtube", "zhihu", "linkedin"}:
+    if platform in {"x", "youtube", "zhihu", "linkedin", "reddit"}:
         if platform == "x" and re.fullmatch(r"@?[A-Za-z0-9_]{1,15}", value):
             value = "https://x.com/" + value.removeprefix("@")
         elif platform == "youtube" and value.startswith("@"):

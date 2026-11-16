@@ -1,0 +1,18 @@
+id: reddit
+kind: source
+api_version: 1
+version: 1
+entrypoint: xhs_local.plugins.sources.reddit.plugin:RedditSourcePlugin
+content_types: [tech_news]
+source_options:
+  required: []
+  additional_properties: false
+  properties:
+    lookback_hours: {type: number, minimum: 1, default: 168}
+    max_posts_per_target: {type: integer, minimum: 1, maximum: 100, default: 25}
+    max_images_per_post: {type: integer, minimum: 0, default: 4}
+    request_timeout_seconds: {type: number, minimum: 1, default: 20}
+target_options:
+  required: []
+  additional_properties: false
+  properties: {}

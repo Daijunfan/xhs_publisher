@@ -10,7 +10,7 @@ import yaml
 
 from .models import SourcesConfig, TargetConfig
 from .video_sources import creator_target
-from .knowledge_sources import linkedin_homepage, zhihu_locator_kind
+from .knowledge_sources import linkedin_homepage, zhihu_locator_kind, reddit_homepage
 
 
 def parse_creator_link(value: str) -> tuple[str, TargetConfig]:
@@ -20,6 +20,10 @@ def parse_creator_link(value: str) -> tuple[str, TargetConfig]:
         raise ValueError("请输入 X 或 YouTube 博主主页链接")
     host = parsed.netloc.lower()
     path = unquote(parsed.path).rstrip("/")
+    if host in {"reddit.com", "www.reddit.com", "old.reddit.com"}:
+        locator = reddit_homepage(value)
+        key = urlsplit(locator).path.strip("/").replace("/", "-")
+        return "reddit", TargetConfig(id="reddit-" + key, locator=locator, name=key)
     if host in {"zhihu.com", "www.zhihu.com", "daily.zhihu.com"}:
         kind = zhihu_locator_kind(value)
         locator = "https://daily.zhihu.com/" if kind == "editorial" else "https://www.zhihu.com" + path.lower()
@@ -69,6 +73,8 @@ def collector_locator(platform: str, locator: str) -> str:
         if link and link[1].lower() not in {"c", "joinchat", "addlist"}:
             return link[1]
         return value.removeprefix("@")
+    if platform == "reddit":
+        return reddit_homepage(locator)
     if platform in {"zhihu", "linkedin"}:
         found, target = parse_creator_link(locator)
         if found != platform:

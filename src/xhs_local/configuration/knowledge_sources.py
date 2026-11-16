@@ -46,3 +46,27 @@ def zhihu_locator_kind(value: str) -> str:
     ):
         return "author"
     raise ValueError("Use a Zhihu author homepage or https://daily.zhihu.com/")
+
+
+def reddit_homepage(value: str) -> str:
+    value = value.strip()
+    if re.match(r"^/?(?:r|u|user)/", value, re.I):
+        value = "https://www.reddit.com/" + value.lstrip("/")
+    parsed = urlsplit(value)
+    match = re.fullmatch(
+        r"/(r|u|user)/([a-z0-9_-]{2,30})(?:/(?:new|hot|top|submitted))?/?",
+        unquote(parsed.path),
+        re.I,
+    )
+    if (
+        parsed.scheme not in {"https", "http"}
+        or parsed.hostname not in {"reddit.com", "www.reddit.com", "old.reddit.com"}
+        or parsed.username
+        or parsed.password
+        or parsed.port not in (None, 80, 443)
+        or not match
+        or match[2].lower() in {"all", "popular", "friends", "mod"}
+    ):
+        raise ValueError("Use a Reddit community or user homepage")
+    kind = "r" if match[1].lower() == "r" else "user"
+    return "https://www.reddit.com/" + kind + "/" + match[2].lower() + "/"

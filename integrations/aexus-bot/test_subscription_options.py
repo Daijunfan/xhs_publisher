@@ -77,9 +77,12 @@ class SubscriptionOptionsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_new_public_platforms_hotplug_without_private_yaml_or_credentials(self):
         rows = [AgentsTarget(sourceId="ns_zhihu", targetId="zhihu-daily", plugin="zhihu", locator="https://daily.zhihu.com/", name="Public Zhihu selections", enabled=True, pollSeconds=1800), AgentsTarget(sourceId="ns_linkedin", targetId="linkedin-research", plugin="linkedin", locator="https://uk.linkedin.com/showcase/FixtureResearch/posts", name="Public research", enabled=True, pollSeconds=7200)]
+        rows.append(AgentsTarget(sourceId="ns_reddit", targetId="reddit-fixture", plugin="reddit", locator="r/Fixture", name="Reddit fixture", enabled=True, pollSeconds=1800))
         await self.manager.apply_agents_targets([self.target("youtube"), *rows])
         sources = {source.plugin: source for source in self.scheduler.snapshot.sources.sources}
         self.assertEqual(sources["zhihu"].id, "agents-zhihu")
+        self.assertEqual(sources["reddit"].id, "agents-reddit")
+        self.assertEqual(sources["reddit"].targets[0].locator, "https://www.reddit.com/r/fixture/")
         self.assertEqual(sources["linkedin"].targets[0].locator, "https://www.linkedin.com/showcase/fixtureresearch")
         self.assertEqual(sources["youtube"].options, {"fixture_auth_reference": "youtube"})
         self.assertTrue(sources["youtube"].enabled)
@@ -88,6 +91,7 @@ class SubscriptionOptionsTests(unittest.IsolatedAsyncioTestCase):
         await self.manager.apply_agents_targets([self.target("youtube")])
         inactive = {source.plugin: source for source in self.scheduler.snapshot.sources.sources}
         self.assertFalse(inactive["zhihu"].enabled)
+        self.assertFalse(inactive["reddit"].enabled)
         self.assertEqual(inactive["zhihu"].targets[0].id, "zhihu-daily")
 
 

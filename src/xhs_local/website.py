@@ -281,8 +281,8 @@ class WebsiteSubscriptions:
             remaining = {(t.plugin, t.targetId): t for t in targets}
             configured = list(current.sources.sources)
             for plugin in sorted({target.plugin for target in targets} - {source.plugin for source in configured}):
-                if plugin in {"zhihu", "linkedin"}:
-                    configured.append(SourceConfig(id="agents-" + plugin, plugin=plugin, enabled=False, poll_seconds=1800 if plugin == "zhihu" else 7200))
+                if plugin in {"zhihu", "linkedin", "reddit"}:
+                    configured.append(SourceConfig(id="agents-" + plugin, plugin=plugin, enabled=False, poll_seconds=1800 if plugin in {"zhihu", "reddit"} else 7200))
             owners = {}
             for source in configured:
                 owners.setdefault(source.plugin, source.id)

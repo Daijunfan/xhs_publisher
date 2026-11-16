@@ -239,7 +239,7 @@ class ArchiveQueries:
                     self.db.execute("INSERT INTO source_routes VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET platform=excluded.platform,channel_id=excluded.channel_id,name=excluded.name", (source["id"], source["plugin"], source["channel_id"], source["name"]))
                 self.db.execute("UPDATE post_index SET platform=COALESCE((SELECT platform FROM source_routes WHERE id=post_index.source_id),'') WHERE platform=''")
             self.store.capacity.initialize()
-            return {"retentionDays": None, "platformCapacityBytes": {p: PLATFORM_BYTES for p in ("telegram", "x", "youtube", "zhihu", "linkedin")}}
+            return {"retentionDays": None, "platformCapacityBytes": {p: PLATFORM_BYTES for p in ("telegram", "x", "youtube", "zhihu", "linkedin", "reddit")}}
         if operation == "summaries": return self.summaries()
         if operation == "posts-page": return self.page(args)
         if operation == "post-get": return self.bundle([args["id"]])

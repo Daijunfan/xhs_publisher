@@ -130,3 +130,9 @@ attempt, and 429 backs off. The worker does not evade login or access restrictio
 
 Run `tests/unit/plugins/sources/test_knowledge_sources.py`, the architecture tests
 and `test_subscription_options.py` with disposable state before deployment.
+
+## Reddit
+
+The same subscription hotplug path supports `reddit`, using `agents-reddit` without rewriting private YAML. Community and public-user homepages normalize to stable identities. The adapter reads currently available public Atom feeds, preserves original attribution/time/links, and keeps API/RSS access errors explicit. Feed requests are staggered at least 15 seconds apart; 429 pauses the entire Reddit client for 15 minutes before scheduler retry. Default target polling is 30 minutes. First-pass coverage of a large list is progressive, not simultaneous. The existing publication deduplication, revoked-source rejection, server receipt, archive and capacity path also apply.
+
+No private comments, votes, browser credentials or unsupported native actions are fabricated. Validate with `tests/unit/plugins/sources/test_reddit.py`, `tests/unit/plugins/sources/test_knowledge_sources.py`, `tests/architecture` and `integrations/aexus-bot/test_subscription_options.py`.

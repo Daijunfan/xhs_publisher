@@ -12,7 +12,7 @@ from xhs_local.pipeline.agents import AgentsPublisher, CollectorRequestError
 class CorePublisher(AgentsPublisher):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.source_plugins.update({"agents-zhihu": "zhihu", "agents-linkedin": "linkedin"})
+        self.source_plugins.update({"agents-zhihu": "zhihu", "agents-linkedin": "linkedin", "agents-reddit": "reddit"})
         self._subscription_lock = asyncio.Lock()
         self._acknowledged_revision = None
 
